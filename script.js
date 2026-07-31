@@ -1,821 +1,5636 @@
-/* =========================================================
-   NOGUEIRA — script.js
-   Protótipo funcional em memória (sem backend / sem storage).
-   ========================================================= */
+// ============================================================================
+// PARTE 1
+// CONFIGURAÇÃO DA API, ESTADO, AUTENTICAÇÃO E FUNÇÕES AUXILIARES
+// ============================================================================
 
-/* ---------------- ÍCONES (SVG inline, estilo premium/linear) ---------------- */
-const ICONS = {
-  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>`,
-  wallet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><path d="M16 14.2h2.2"/><path d="M7 6V5a2 2 0 0 1 2-2h5"/></svg>`,
-  clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
-  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg>`,
-  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.9l.06.06a2 2 0 1 1-2.85 2.85l-.06-.06a1.7 1.7 0 0 0-1.9-.34 1.7 1.7 0 0 0-1 1.55V20a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.9.34l-.06.06a2 2 0 1 1-2.85-2.85l.06-.06a1.7 1.7 0 0 0 .34-1.9 1.7 1.7 0 0 0-1.55-1H4a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.9l-.06-.06a2 2 0 1 1 2.85-2.85l.06.06a1.7 1.7 0 0 0 1.9.34H10a1.7 1.7 0 0 0 1-1.55V4a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.9-.34l.06-.06a2 2 0 1 1 2.85 2.85l-.06.06a1.7 1.7 0 0 0-.34 1.9V10c.14.6.6 1.1 1.55 1H20a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>`,
-  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>`,
-  exit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h12"/></svg>`,
-  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
-  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 19c1.1-3.2 3.6-4.8 6.2-4.8s5.1 1.6 6.2 4.8"/><circle cx="17" cy="8.5" r="2.4"/><path d="M15.5 14.4c2 .1 3.9 1.5 4.7 3.9"/></svg>`,
-  hourglass: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 4 3 5 5 6.2C10 10.4 7 11.4 7 15.4"/><path d="M17 3c0 4-3 5-5 6.2 2 1.2 5 2.2 5 6.2"/><path d="M7 21c0-4 3-5 5-6.2M17 21c0-4-3-5-5-6.2"/></svg>`,
-  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg>`,
-  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg>`,
-  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 7 12l7.5 7"/></svg>`,
-  file: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/></svg>`,
-  print: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V4h10v4"/><rect x="5" y="8" width="14" height="8" rx="1.5"/><path d="M7 16h10v5H7z"/></svg>`,
-  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="19" r="2.4"/><path d="M8.2 10.8 15.8 6.2M8.2 13.2l7.6 4.6"/></svg>`,
-  cash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>`,
-  pix: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4.5 4.5 8.5a2.8 2.8 0 0 0 0 4l4 4a2.8 2.8 0 0 0 4 0l4-4a2.8 2.8 0 0 0 0-4l-4-4a2.8 2.8 0 0 0-4 0Z"/></svg>`,
-  card: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 10h19"/></svg>`,
-  more: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>`,
-  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
-  trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 16 9 10.5l4 4 7-7.5"/><path d="M15.5 6.5H20V11"/></svg>`,
-  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 4.8 19 8.6 8.4 19.2 4 20l.8-4.4Z"/></svg>`,
-  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2M7 7l1 12.5A1.5 1.5 0 0 0 9.5 21h5a1.5 1.5 0 0 0 1.5-1.5L17 7"/></svg>`,
-  chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>`,
-  chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>`,
-  calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>`,
-  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`,
-};
-function paintIcons(root=document){
-  root.querySelectorAll('[data-ico]').forEach(el=>{
-    const key = el.getAttribute('data-ico');
-    if(ICONS[key] && !el.dataset.painted){ el.innerHTML = ICONS[key]; el.dataset.painted = '1'; }
-  });
-}
 
-/* ---------------- ESTADO / DADOS (mock, em memória) ---------------- */
-const TODAY = new Date(2026, 6, 31, 16, 20); // 31 de julho de 2026
+// ============================================================================
+// CONFIGURAÇÃO DA API
+// ============================================================================
 
-let uid = 1000;
-const nextId = () => (uid++).toString();
+const API_BASE_URL = "http://localhost:3000/api";
 
-function mkDate(y,m,d,h=12,mi=0){ return new Date(y,m,d,h,mi); }
+const TOKEN_KEY = "caderneta_token";
+const USER_KEY = "caderneta_usuario";
+const THEME_KEY = "caderneta_tema";
 
-const clients = [
-  { id:'c1', name:'João da Silva', nickname:'João', phone:'(92) 98888-1111', note:'' },
-  { id:'c2', name:'Maria Souza', nickname:'', phone:'(92) 99999-2222', note:'' },
-  { id:'c3', name:'Carlos Pereira', nickname:'Carlinhos', phone:'(92) 98777-3333', note:'' },
-  { id:'c4', name:'Ana Beatriz Lima', nickname:'Ana', phone:'', note:'' },
-  { id:'c5', name:'Roberto Nunes', nickname:'', phone:'(92) 98555-5555', note:'' },
-  { id:'c6', name:'Fernanda Costa', nickname:'Fê', phone:'(92) 98222-9090', note:'' },
-  { id:'c7', name:'Paulo Ricardo', nickname:'', phone:'', note:'' },
-  { id:'c8', name:'Juliana Alves', nickname:'Ju', phone:'(92) 99111-4040', note:'' },
+
+// ============================================================================
+// MESES
+// ============================================================================
+
+const MESES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
-const accounts = [
-  {
-    id:'a1', clientId:'c1', status:'aberta', openedAt: mkDate(2026,6,10,9,0),
-    purchases:[
-      { id:'p1', desc:'Arroz e feijão', value:42.5, date: mkDate(2026,6,10,9,0), note:'' },
-      { id:'p2', desc:'Refrigerante 2L', value:28.0, date: mkDate(2026,6,31,14,30), note:'' },
-      { id:'p3', desc:'Pão e manteiga', value:75.5, date: mkDate(2026,6,20,8,10), note:'' },
-    ], payment:null
-  },
-  {
-    id:'a2', clientId:'c2', status:'aberta', openedAt: mkDate(2026,6,3,10,0),
-    purchases:[
-      { id:'p4', desc:'Carnes e frios', value:120.5, date: mkDate(2026,6,3,10,0), note:'' },
-      { id:'p5', desc:'Verduras', value:22.0, date: mkDate(2026,6,29,9,0), note:'' },
-      { id:'p6', desc:'Óleo e sal', value:43.0, date: mkDate(2026,6,31,10,45), note:'' },
-    ], payment:null
-  },
-  {
-    id:'a3', clientId:'c3', status:'aberta', openedAt: mkDate(2026,6,15,11,0),
-    purchases:[
-      { id:'p7', desc:'Bebidas diversas', value:96.0, date: mkDate(2026,6,15,11,0), note:'' },
-      { id:'p8', desc:'Café e açúcar', value:31.9, date: mkDate(2026,6,30,17,20), note:'' },
-    ], payment:null
-  },
-  {
-    id:'a4', clientId:'c6', status:'aberta', openedAt: mkDate(2026,6,25,15,0),
-    purchases:[
-      { id:'p9', desc:'Higiene pessoal', value:54.3, date: mkDate(2026,6,25,15,0), note:'' },
-    ], payment:null
-  },
-  {
-    id:'a5', clientId:'c7', status:'aberta', openedAt: mkDate(2026,5,20,10,0),
-    purchases:[
-      { id:'p10', desc:'Mercado do mês', value:210.0, date: mkDate(2026,5,20,10,0), note:'' },
-      { id:'p11', desc:'Bebidas', value:38.0, date: mkDate(2026,6,28,19,0), note:'' },
-    ], payment:null
-  },
-  {
-    id:'a6', clientId:'c4', status:'concluida', openedAt: mkDate(2026,6,1,9,0),
-    purchases:[
-      { id:'p12', desc:'Compras da semana', value:132.0, date: mkDate(2026,6,1,9,0), note:'' },
-      { id:'p13', desc:'Padaria', value:18.5, date: mkDate(2026,6,5,8,0), note:'' },
-    ], payment:{ method:'Pix', date: mkDate(2026,6,29,16,0), note:'' }
-  },
-  {
-    id:'a7', clientId:'c5', status:'concluida', openedAt: mkDate(2026,6,10,9,0),
-    purchases:[
-      { id:'p14', desc:'Mercado geral', value:245.9, date: mkDate(2026,6,10,9,0), note:'' },
-    ], payment:{ method:'Dinheiro', date: mkDate(2026,6,25,12,0), note:'' }
-  },
-  {
-    id:'a8', clientId:'c8', status:'concluida', openedAt: mkDate(2026,6,2,9,0),
-    purchases:[
-      { id:'p15', desc:'Compras diversas', value:88.0, date: mkDate(2026,6,2,9,0), note:'' },
-      { id:'p16', desc:'Bebidas', value:44.0, date: mkDate(2026,6,18,10,0), note:'' },
-    ], payment:{ method:'Cartão', date: mkDate(2026,6,20,11,30), note:'' }
-  },
-  {
-    id:'a9', clientId:'c1', status:'concluida', openedAt: mkDate(2026,5,2,9,0),
-    purchases:[
-      { id:'p17', desc:'Mercado de junho', value:310.0, date: mkDate(2026,5,2,9,0), note:'' },
-    ],
-    /* conta aberta em junho, mas paga somente em julho: o valor deve continuar
-       contando como "recebido" em junho, e não em julho */
-    payment:{ method:'Pix', date: mkDate(2026,6,15,9,0), note:'' }
-  },
-];
 
-/* ---------------- HELPERS ---------------- */
-const BRL = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
-const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-const MESES_ABR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+// ============================================================================
+// ESTADO PRINCIPAL DO FRONT-END
+// ============================================================================
 
-function two(n){ return n.toString().padStart(2,'0'); }
-function fmtDate(d){ return `${two(d.getDate())}/${two(d.getMonth()+1)}/${d.getFullYear()}`; }
-function fmtHora(d){ return `${two(d.getHours())}:${two(d.getMinutes())}`; }
-function fmtDateHora(d){ return `${fmtDate(d)}, às ${fmtHora(d)}`; }
-function isSameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-function relDay(d){
-  if(isSameDay(d, TODAY)) return `Hoje, às ${fmtHora(d)}`;
-  const y = new Date(TODAY); y.setDate(y.getDate()-1);
-  if(isSameDay(d,y)) return `Ontem, às ${fmtHora(d)}`;
-  return fmtDateHora(d);
-}
-function clientById(id){ return clients.find(c=>c.id===id); }
-function accountTotal(acc){ return acc.purchases.reduce((s,p)=>s+p.value,0); }
-function lastPurchase(acc){ return acc.purchases.slice().sort((a,b)=>b.date-a.date)[0]; }
-function openAccounts(){ return accounts.filter(a=>a.status==='aberta'); }
-function closedFechada(){ return accounts.filter(a=>a.status==='fechada'); }
-function pendingAccounts(){ return accounts.filter(a=>a.status==='aberta'||a.status==='fechada'); }
-function closedAccounts(){ return accounts.filter(a=>a.status==='concluida'); }
+const state = {
+  usuario: null,
 
-/* A conta pertence ao mês em que foi ABERTA (competência), independente de quando é paga */
-function competencia(acc){ return { m: acc.openedAt.getMonth(), y: acc.openedAt.getFullYear() }; }
-function isBeforeCurrentMonth(y,m){ return (y < TODAY.getFullYear()) || (y===TODAY.getFullYear() && m < TODAY.getMonth()); }
+  paginaAtual: "inicio",
 
-/* Ao virar o mês, toda conta ainda "aberta" de um mês anterior passa a "fechada":
-   continua com o valor pendente, vinculada ao mês original, sem poder receber novas compras. */
-function autoCloseAccounts(){
-  accounts.forEach(acc=>{
-    if(acc.status==='aberta'){
-      const c = competencia(acc);
-      if(isBeforeCurrentMonth(c.y, c.m)) acc.status = 'fechada';
-    }
-  });
-}
+  contaAtual: null,
 
-/* Cliente não pode abrir nova conta enquanto tiver uma conta aberta OU fechada (pendente de pagamento) */
-function clientPendingAccount(clientId){ return pendingAccounts().find(a=>a.clientId===clientId); }
+  historicoAtual: null,
 
-function showToast(msg, icon='check'){
-  const t = document.getElementById('toast');
-  t.innerHTML = `<span class="ico">${ICONS[icon]||''}</span><span>${msg}</span>`;
-  t.classList.add('is-show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(()=> t.classList.remove('is-show'), 2600);
-}
+  clienteSelecionado: null,
 
-/* ---------------- NAVEGAÇÃO ---------------- */
-const PAGE_TITLES = {
-  inicio: ['Início','Visão geral da sua loja hoje'],
-  contas: ['Contas','Contas em aberto no momento'],
-  'conta-detalhe': ['Detalhes da conta','Compras e movimentações desta conta'],
-  historico: ['Histórico','Contas já pagas'],
-  'historico-detalhe': ['Detalhes do histórico','Consulta de conta finalizada'],
-  relatorios: ['Relatórios','Desempenho da sua loja'],
-  configuracoes: ['Configurações','Preferências do sistema'],
-  perfil: ['Perfil','Seus dados de proprietário'],
+  contaPendenteSelecionada: null,
+
+  compraEditando: null,
+
+  formaPagamento: "DINHEIRO",
+
+  dashboard: {
+    ano: new Date().getFullYear(),
+    mes: new Date().getMonth() + 1,
+  },
+
+  contas: {
+    pesquisa: "",
+    ordenacao: "mais_recente",
+    pagina: 1,
+    limite: 50,
+  },
+
+  historico: {
+    pesquisa: "",
+    pagina: 1,
+    limite: 50,
+  },
+
+  relatorios: {
+    periodo: "mes_atual",
+    ano: new Date().getFullYear(),
+    mes: new Date().getMonth() + 1,
+  },
 };
 
-function goTo(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('is-active'));
-  document.getElementById('page-'+page).classList.add('is-active');
 
-  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('is-active', b.dataset.page===page));
-  document.querySelectorAll('.bn-item[data-page]').forEach(b=>b.classList.toggle('is-active', b.dataset.page===page));
+// ============================================================================
+// FUNÇÕES AUXILIARES PARA ELEMENTOS HTML
+// ============================================================================
 
-  const [title, sub] = PAGE_TITLES[page] || ['',''];
-  document.getElementById('pageTitle').textContent = title;
-  document.getElementById('pageSubtitle').textContent = sub;
-
-  if(page==='inicio') renderInicio();
-  if(page==='contas') renderContas();
-  if(page==='historico') renderHistorico();
-  if(page==='relatorios') renderRelatorios();
-
-  window.scrollTo({top:0, behavior:'smooth'});
-  closeSheet();
+function elemento(id) {
+  return document.getElementById(id);
 }
 
-document.querySelectorAll('[data-page]').forEach(btn=>{
-  btn.addEventListener('click', ()=> goTo(btn.dataset.page));
-});
-document.querySelectorAll('[data-back]').forEach(btn=>{
-  btn.addEventListener('click', ()=> goTo(btn.dataset.back));
-});
 
-/* ---------------- RENDER: INÍCIO ---------------- */
-/* Mês em consulta na página inicial. Por padrão, o mês atual. */
-let homeMonth = TODAY.getMonth();
-let homeYear = TODAY.getFullYear();
-
-/* Estatísticas de um mês, sempre pela competência (mês em que a conta foi aberta),
-   e não pela data em que o pagamento efetivamente aconteceu. */
-function computeMonthStats(m, y){
-  const inMonth = acc => { const c = competencia(acc); return c.m===m && c.y===y; };
-  const pendentes = accounts.filter(a=> inMonth(a) && (a.status==='aberta' || a.status==='fechada'));
-  const pagas = accounts.filter(a=> inMonth(a) && a.status==='concluida');
-  return {
-    totalAReceber: pendentes.reduce((s,a)=>s+accountTotal(a),0),
-    totalRecebido: pagas.reduce((s,a)=>s+accountTotal(a),0),
-    qtdPendentes: pendentes.length,
-    qtdPagas: pagas.length,
-  };
+function elementos(seletor, raiz = document) {
+  return Array.from(
+    raiz.querySelectorAll(seletor),
+  );
 }
 
-function updateMonthNavUI(){
-  const label = `${MESES[homeMonth][0].toUpperCase()+MESES[homeMonth].slice(1)} de ${homeYear}`;
-  document.getElementById('homeMonthLabel').textContent = label;
-  const atCurrent = homeMonth===TODAY.getMonth() && homeYear===TODAY.getFullYear();
-  document.getElementById('btnMesProximo').disabled = atCurrent;
-  document.getElementById('btnMesAtual').hidden = atCurrent;
-}
 
-function renderInicio(){
-  autoCloseAccounts();
-  document.getElementById('statClientes').textContent = clients.length;
+function definirTexto(id, valor) {
+  const elementoHtml = elemento(id);
 
-  updateMonthNavUI();
-  const stats = computeMonthStats(homeMonth, homeYear);
-
-  document.getElementById('statAReceber').textContent = BRL(stats.totalAReceber);
-  document.getElementById('statConcluidos').textContent = BRL(stats.totalRecebido);
-  document.getElementById('statAReceberMes').textContent = `${stats.qtdPendentes} conta(s) pendente(s)`;
-  document.getElementById('statConcluidosMes').textContent = `${stats.qtdPagas} pagamento(s) concluído(s)`;
-
-  const withMoves = openAccounts()
-    .map(acc=>({acc, last: lastPurchase(acc)}))
-    .filter(x=>x.last)
-    .sort((a,b)=> b.last.date - a.last.date)
-    .slice(0,5);
-
-  const list = document.getElementById('movesList');
-  if(withMoves.length===0){
-    list.innerHTML = `<div class="empty-state"><span class="ico ico-lg" data-ico="wallet"></span><h3>Nenhuma movimentação recente</h3><p>As contas com novas compras aparecerão aqui.</p></div>`;
-  } else {
-    list.innerHTML = withMoves.map(({acc,last})=>{
-      const cl = clientById(acc.clientId);
-      const initials = cl.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-      return `
-      <div class="move-item">
-        <div class="move-main">
-          <span class="move-avatar">${initials}</span>
-          <div class="move-text">
-            <strong>${cl.name}</strong>
-            <span>${last.desc}</span>
-            <small>Última compra: ${BRL(last.value)} · ${relDay(last.date)}</small>
-          </div>
-        </div>
-        <div class="move-right">
-          <strong>Total: ${BRL(accountTotal(acc))}</strong>
-          <button class="btn btn-secondary" data-open-acc="${acc.id}">Ver conta</button>
-        </div>
-      </div>`;
-    }).join('');
+  if (!elementoHtml) {
+    return;
   }
-  paintIcons(list);
-  wireOpenAccountButtons(list);
+
+  elementoHtml.textContent =
+    valor ?? "";
 }
 
-function wireOpenAccountButtons(root){
-  root.querySelectorAll('[data-open-acc]').forEach(btn=>{
-    btn.addEventListener('click', ()=> openContaDetalhe(btn.dataset.openAcc));
-  });
-}
-function wireOpenHistoricoButtons(root){
-  root.querySelectorAll('[data-open-hist]').forEach(btn=>{
-    btn.addEventListener('click', ()=> openHistoricoDetalhe(btn.dataset.openHist));
-  });
-}
-function wireAddCompraButtons(root){
-  root.querySelectorAll('[data-add-compra]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openModalCompra(btn.dataset.addCompra); });
-  });
+
+function definirOculto(id, oculto) {
+  const elementoHtml = elemento(id);
+
+  if (!elementoHtml) {
+    return;
+  }
+
+  elementoHtml.hidden =
+    Boolean(oculto);
 }
 
-/* ---------------- RENDER: CONTAS ---------------- */
-let contasSort = 'recentes';
-let contasSearch = '';
 
-function renderContas(){
-  let list = pendingAccounts().filter(acc=>{
-    const cl = clientById(acc.clientId);
-    return cl.name.toLowerCase().includes(contasSearch.toLowerCase());
-  });
+function definirDesabilitado(
+  id,
+  desabilitado,
+  titulo = "",
+) {
+  const elementoHtml = elemento(id);
 
-  list = list.slice().sort((a,b)=>{
-    if(contasSort==='recentes') return (lastPurchase(b)?.date||b.openedAt) - (lastPurchase(a)?.date||a.openedAt);
-    if(contasSort==='antigas') return (lastPurchase(a)?.date||a.openedAt) - (lastPurchase(b)?.date||b.openedAt);
-    if(contasSort==='maior') return accountTotal(b) - accountTotal(a);
-    if(contasSort==='menor') return accountTotal(a) - accountTotal(b);
+  if (!elementoHtml) {
+    return;
+  }
+
+  elementoHtml.disabled =
+    Boolean(desabilitado);
+
+  elementoHtml.title =
+    titulo;
+}
+
+
+// ============================================================================
+// PROTEÇÃO DE TEXTOS INSERIDOS NO HTML
+//
+// Evita que dados recebidos da API sejam interpretados como código HTML.
+// ============================================================================
+
+function escaparHtml(valor) {
+  return String(valor ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+// ============================================================================
+// INICIAIS DO NOME
+//
+// Exemplo:
+// João da Silva → JS
+// ============================================================================
+
+function obterIniciais(nome = "") {
+  const partes = nome
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (partes.length === 0) {
+    return "—";
+  }
+
+  return partes
+    .map((parte) => parte[0])
+    .join("")
+    .toUpperCase();
+}
+
+
+// ============================================================================
+// CONVERSÃO DE NÚMEROS
+// ============================================================================
+
+function converterNumero(valor) {
+  const numero = Number(valor);
+
+  if (!Number.isFinite(numero)) {
     return 0;
-  });
-
-  document.getElementById('contasEmpty').hidden = list.length>0;
-
-  const statusBadge = acc => acc.status==='fechada'
-    ? `<span class="badge badge-closed">Fechada</span>`
-    : `<span class="badge badge-open">Aberta</span>`;
-  const addCompraBtn = acc => acc.status==='fechada'
-    ? `<button class="btn btn-secondary" disabled title="Conta fechada: aguardando pagamento">Fechada</button>`
-    : `<button class="btn btn-primary" data-add-compra="${acc.id}">Adicionar compra</button>`;
-
-  const tbody = document.getElementById('tableContasBody');
-  tbody.innerHTML = list.map(acc=>{
-    const cl = clientById(acc.clientId);
-    const lp = lastPurchase(acc);
-    return `<tr>
-      <td><strong>${cl.name}</strong></td>
-      <td>${statusBadge(acc)}</td>
-      <td>${fmtDate(acc.openedAt)}</td>
-      <td>${lp ? relDay(lp.date) : '—'}</td>
-      <td>${acc.purchases.length}</td>
-      <td><strong>${BRL(accountTotal(acc))}</strong></td>
-      <td>
-        <div class="row-actions">
-          <button class="btn btn-secondary" data-open-acc="${acc.id}">Ver conta</button>
-          ${addCompraBtn(acc)}
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-
-  const grid = document.getElementById('cardsContasMobile');
-  grid.innerHTML = list.map(acc=>{
-    const cl = clientById(acc.clientId);
-    const lp = lastPurchase(acc);
-    return `<div class="item-card">
-      <div class="item-card-top"><strong>${cl.name}</strong><span class="value">${BRL(accountTotal(acc))}</span></div>
-      <p>${statusBadge(acc)}</p>
-      <p>Conta aberta em ${fmtDate(acc.openedAt)}</p>
-      <p>${lp ? 'Última compra ' + relDay(lp.date) : 'Sem compras registradas'}</p>
-      <p>${acc.purchases.length} registro(s)</p>
-      <div class="item-actions">
-        <button class="btn btn-secondary" data-open-acc="${acc.id}">Ver conta</button>
-        ${addCompraBtn(acc)}
-      </div>
-    </div>`;
-  }).join('');
-
-  [tbody, grid].forEach(el=>{ wireOpenAccountButtons(el); wireAddCompraButtons(el); });
-}
-
-document.getElementById('searchContas').addEventListener('input', e=>{ contasSearch = e.target.value; renderContas(); });
-document.getElementById('sortContas').addEventListener('change', e=>{ contasSort = e.target.value; renderContas(); });
-
-/* ---------------- DETALHES DA CONTA ABERTA ---------------- */
-let currentAccountId = null;
-
-function openContaDetalhe(accId){
-  currentAccountId = accId;
-  const acc = accounts.find(a=>a.id===accId);
-  const cl = clientById(acc.clientId);
-  const lp = lastPurchase(acc);
-
-  document.getElementById('dcNome').textContent = cl.name;
-  document.getElementById('dcMeta').textContent = `Aberta em ${fmtDate(acc.openedAt)} · Última movimentação: ${lp ? relDay(lp.date) : '—'}`;
-  document.getElementById('dcTotal').textContent = BRL(accountTotal(acc));
-
-  const isFechada = acc.status==='fechada';
-  document.getElementById('dcClosedBanner').hidden = !isFechada;
-  const btnAdd = document.getElementById('btnAddCompra');
-  btnAdd.disabled = isFechada;
-  btnAdd.title = isFechada ? 'Conta fechada: não é possível adicionar novas compras' : '';
-
-  const list = document.getElementById('purchasesList');
-  const sorted = acc.purchases.slice().sort((a,b)=>b.date-a.date);
-  list.innerHTML = sorted.length ? sorted.map(p=>`
-    <div class="purchase-item">
-      <div>
-        <strong>${p.desc}</strong>
-        <div class="p-meta">${fmtDate(p.date)} às ${fmtHora(p.date)}</div>
-        ${p.note ? `<div class="p-obs">${p.note}</div>` : ''}
-      </div>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <span class="purchase-value">${BRL(p.value)}</span>
-        <div class="purchase-actions">
-          <button class="icon-btn" data-edit-purchase="${p.id}"><span class="ico" data-ico="edit"></span></button>
-          <button class="icon-btn danger" data-del-purchase="${p.id}"><span class="ico" data-ico="trash"></span></button>
-        </div>
-      </div>
-    </div>
-  `).join('') : `<div class="empty-state"><span class="ico ico-lg" data-ico="wallet"></span><h3>Nenhuma compra registrada</h3><p>Adicione a primeira compra desta conta.</p></div>`;
-
-  paintIcons(list);
-  list.querySelectorAll('[data-edit-purchase]').forEach(b=> b.addEventListener('click', ()=> openModalCompra(accId, b.dataset.editPurchase)));
-  list.querySelectorAll('[data-del-purchase]').forEach(b=> b.addEventListener('click', ()=> deletePurchase(accId, b.dataset.delPurchase)));
-
-  goTo('conta-detalhe');
-}
-
-function deletePurchase(accId, purchaseId){
-  const acc = accounts.find(a=>a.id===accId);
-  acc.purchases = acc.purchases.filter(p=>p.id!==purchaseId);
-  showToast('Registro excluído.', 'trash');
-  openContaDetalhe(accId);
-}
-
-document.getElementById('btnAddCompra').addEventListener('click', ()=> openModalCompra(currentAccountId));
-document.getElementById('btnConcluirPagamento').addEventListener('click', ()=> openModalPagamento(currentAccountId));
-
-/* ---------------- MODAL: NOVA CONTA ---------------- */
-const modalNovaConta = document.getElementById('modalNovaConta');
-let pendingOpenClientId = null;
-
-function openModalNovaConta(){
-  document.getElementById('searchClientModal').value='';
-  document.getElementById('newClientNome').value='';
-  document.getElementById('newClientApelido').value='';
-  document.getElementById('newClientTelefone').value='';
-  document.getElementById('newClientObs').value='';
-  document.getElementById('clientHasOpenWarning').hidden = true;
-  renderClientResults('');
-  openModal(modalNovaConta);
-}
-
-function renderClientResults(query){
-  const box = document.getElementById('clientResults');
-  const q = query.trim().toLowerCase();
-  if(!q){ box.innerHTML=''; return; }
-  const matches = clients.filter(c=>c.name.toLowerCase().includes(q)).slice(0,6);
-  box.innerHTML = matches.map(c=>`
-    <div class="client-row">
-      <div><div class="cr-name">${c.name}</div><div class="cr-phone">${c.phone||'Sem telefone'}</div></div>
-      <button class="btn btn-primary" data-pick-client="${c.id}">Selecionar</button>
-    </div>
-  `).join('') || `<p class="muted" style="padding:8px 2px;">Nenhum cliente encontrado. Cadastre abaixo.</p>`;
-
-  box.querySelectorAll('[data-pick-client]').forEach(b=>{
-    b.addEventListener('click', ()=> handlePickClient(b.dataset.pickClient));
-  });
-}
-document.getElementById('searchClientModal').addEventListener('input', e=> renderClientResults(e.target.value));
-
-function handlePickClient(clientId){
-  const pendingAcc = clientPendingAccount(clientId);
-  if(pendingAcc){
-    pendingOpenClientId = pendingAcc.id;
-    const msg = pendingAcc.status==='fechada'
-      ? 'Este cliente possui uma conta fechada aguardando pagamento. É preciso concluir o pagamento antes de abrir uma nova conta.'
-      : 'Este cliente já possui uma conta em aberto.';
-    document.getElementById('clientHasOpenWarningText').textContent = msg;
-    document.getElementById('clientHasOpenWarning').hidden = false;
-  } else {
-    createAccountForClient(clientId);
   }
-}
-document.getElementById('btnAcessarContaAtual').addEventListener('click', ()=>{
-  closeModal(modalNovaConta);
-  openContaDetalhe(pendingOpenClientId);
-});
 
-document.getElementById('btnCadastrarEAbrir').addEventListener('click', ()=>{
-  const nome = document.getElementById('newClientNome').value.trim();
-  if(!nome){ showToast('Informe o nome do cliente.', 'close'); return; }
-  const novo = {
-    id:'c'+nextId(), name:nome,
-    nickname:document.getElementById('newClientApelido').value.trim(),
-    phone:document.getElementById('newClientTelefone').value.trim(),
-    note:document.getElementById('newClientObs').value.trim(),
+  return numero;
+}
+
+
+// ============================================================================
+// FORMATAÇÃO DE MOEDA
+// ============================================================================
+
+function formatarMoeda(valor) {
+  return converterNumero(valor)
+    .toLocaleString(
+      "pt-BR",
+      {
+        style: "currency",
+        currency: "BRL",
+      },
+    );
+}
+
+
+// ============================================================================
+// FORMATAÇÃO DE DATA
+// ============================================================================
+
+function formatarData(valor) {
+  if (!valor) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      timeZone:
+        "America/Manaus",
+
+      day:
+        "2-digit",
+
+      month:
+        "2-digit",
+
+      year:
+        "numeric",
+    },
+  ).format(
+    new Date(valor),
+  );
+}
+
+
+// ============================================================================
+// FORMATAÇÃO DE HORA
+// ============================================================================
+
+function formatarHora(valor) {
+  if (!valor) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      timeZone:
+        "America/Manaus",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit",
+
+      hour12:
+        false,
+    },
+  ).format(
+    new Date(valor),
+  );
+}
+
+
+// ============================================================================
+// FORMATAÇÃO DE DATA E HORA
+// ============================================================================
+
+function formatarDataHora(valor) {
+  if (!valor) {
+    return "—";
+  }
+
+  return (
+    `${formatarData(valor)}, ` +
+    `às ${formatarHora(valor)}`
+  );
+}
+
+
+// ============================================================================
+// FORMATAÇÃO DE COMPETÊNCIA
+//
+// Exemplo:
+// ano = 2026
+// mes = 7
+// resultado = Julho de 2026
+// ============================================================================
+
+function formatarCompetencia(
+  ano,
+  mes,
+) {
+  const nomeMes =
+    MESES[mes - 1] || "";
+
+  const mesFormatado =
+    nomeMes.charAt(0).toUpperCase() +
+    nomeMes.slice(1);
+
+  return `${mesFormatado} de ${ano}`;
+}
+
+
+// ============================================================================
+// CONVERTER VALOR DIGITADO PARA NÚMERO
+//
+// Exemplos:
+// 12,50 → 12.5
+// 1.200,50 → 1200.5
+// ============================================================================
+
+function converterValorInput(valor) {
+  const texto =
+    String(valor ?? "").trim();
+
+  if (!texto) {
+    return Number.NaN;
+  }
+
+  if (texto.includes(",")) {
+    return Number(
+      texto
+        .replace(/\./g, "")
+        .replace(",", "."),
+    );
+  }
+
+  return Number(texto);
+}
+
+
+// ============================================================================
+// FORMATAR FORMA DE PAGAMENTO
+// ============================================================================
+
+function formatarFormaPagamento(forma) {
+  const formas = {
+    DINHEIRO:
+      "Dinheiro",
+
+    PIX:
+      "Pix",
+
+    CARTAO:
+      "Cartão",
   };
-  clients.push(novo);
-  createAccountForClient(novo.id);
-});
 
-function createAccountForClient(clientId){
-  const acc = { id:'a'+nextId(), clientId, status:'aberta', openedAt:new Date(TODAY), purchases:[], payment:null };
-  accounts.push(acc);
-  closeModal(modalNovaConta);
-  showToast('Conta criada com sucesso.');
-  renderContas();
-  openContaDetalhe(acc.id);
+  return formas[forma] || forma || "—";
 }
 
-document.getElementById('btnNovaContaTop').addEventListener('click', openModalNovaConta);
-document.getElementById('btnNovaContaContas').addEventListener('click', openModalNovaConta);
 
-/* ---------------- MODAL: ADICIONAR / EDITAR COMPRA ---------------- */
-const modalCompra = document.getElementById('modalCompra');
-let compraTargetAccId = null;
-let compraEditId = null;
+// ============================================================================
+// FORMATAR STATUS DA CONTA
+// ============================================================================
 
-function openModalCompra(accId, purchaseId=null){
-  compraTargetAccId = accId;
-  compraEditId = purchaseId;
-  const acc = accounts.find(a=>a.id===accId);
-  if(purchaseId){
-    const p = acc.purchases.find(x=>x.id===purchaseId);
-    document.getElementById('compraDesc').value = p.desc;
-    document.getElementById('compraValor').value = p.value.toFixed(2).replace('.',',');
-    document.getElementById('compraObs').value = p.note||'';
-    document.querySelector('#modalCompra .modal-head h3').textContent = 'Editar compra';
-  } else {
-    document.getElementById('compraDesc').value='';
-    document.getElementById('compraValor').value='';
-    document.getElementById('compraObs').value='';
-    document.querySelector('#modalCompra .modal-head h3').textContent = 'Adicionar compra';
-  }
-  openModal(modalCompra);
+function formatarStatusConta(status) {
+  const statusDisponiveis = {
+    ABERTA:
+      "Aberta",
+
+    FECHADA:
+      "Fechada",
+
+    PAGA:
+      "Paga",
+
+    CANCELADA:
+      "Cancelada",
+  };
+
+  return (
+    statusDisponiveis[status] ||
+    status ||
+    "—"
+  );
 }
 
-document.getElementById('btnSalvarCompra').addEventListener('click', ()=>{
-  const desc = document.getElementById('compraDesc').value.trim();
-  const rawValor = document.getElementById('compraValor').value.replace(/\./g,'').replace(',','.');
-  const valor = parseFloat(rawValor);
 
-  if(!desc){ showToast('Informe o produto ou descrição.', 'close'); return; }
-  if(isNaN(valor) || valor<=0){ showToast('Informe um valor válido.', 'close'); return; }
+// ============================================================================
+// MENSAGENS DO SISTEMA
+// ============================================================================
 
-  const acc = accounts.find(a=>a.id===compraTargetAccId);
-  const note = document.getElementById('compraObs').value.trim();
+function mostrarToast(
+  mensagem,
+  icone = "check",
+) {
+  const toast =
+    elemento("toast");
 
-  if(compraEditId){
-    const p = acc.purchases.find(x=>x.id===compraEditId);
-    p.desc=desc; p.value=valor; p.note=note;
-    showToast('Compra atualizada.');
-  } else {
-    acc.purchases.push({ id:'p'+nextId(), desc, value:valor, date:new Date(TODAY), note });
-    showToast('Compra registrada com sucesso.');
+  if (!toast) {
+    console.log(mensagem);
+    return;
   }
-  closeModal(modalCompra);
-  if(document.getElementById('page-conta-detalhe').classList.contains('is-active')) openContaDetalhe(compraTargetAccId);
-  renderContas(); renderInicio();
-});
 
-/* money input mask (simple) */
-document.getElementById('compraValor').addEventListener('input', e=>{
-  let v = e.target.value.replace(/\D/g,'');
-  if(!v){ e.target.value=''; return; }
-  v = (parseInt(v,10)/100).toFixed(2);
-  e.target.value = v.replace('.',',').replace(/\B(?=(\d{3})+(?!\d)\,)/g,'.');
-});
+  toast.innerHTML = `
+    <span class="ico">
+      ${ICONS[icone] || ""}
+    </span>
 
-/* ---------------- MODAL: CONCLUIR PAGAMENTO ---------------- */
-const modalPagamento = document.getElementById('modalPagamento');
-let payTargetAccId = null;
-let selectedMethod = 'Dinheiro';
-
-function openModalPagamento(accId){
-  payTargetAccId = accId;
-  const acc = accounts.find(a=>a.id===accId);
-  const cl = clientById(acc.clientId);
-  document.getElementById('paySummary').innerHTML = `
-    <div class="ps-row"><span>Cliente</span><strong>${cl.name}</strong></div>
-    <div class="ps-row"><span>Aberta em</span><span>${fmtDate(acc.openedAt)}</span></div>
-    <div class="ps-row"><span>Registros</span><span>${acc.purchases.length}</span></div>
-    <div class="ps-row ps-total"><span>Total</span><strong>${BRL(accountTotal(acc))}</strong></div>
+    <span>
+      ${escaparHtml(mensagem)}
+    </span>
   `;
-  selectedMethod = 'Dinheiro';
-  document.querySelectorAll('#payMethods .method-btn').forEach(b=>b.classList.toggle('is-active', b.dataset.method===selectedMethod));
-  document.getElementById('pagamentoObs').value='';
-  openModal(modalPagamento);
+
+  toast.classList.add(
+    "is-show",
+  );
+
+  clearTimeout(
+    mostrarToast.timeout,
+  );
+
+  mostrarToast.timeout =
+    setTimeout(
+      () => {
+        toast.classList.remove(
+          "is-show",
+        );
+      },
+      3000,
+    );
 }
 
-document.querySelectorAll('#payMethods .method-btn').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    selectedMethod = b.dataset.method;
-    document.querySelectorAll('#payMethods .method-btn').forEach(x=>x.classList.toggle('is-active', x===b));
-  });
-});
 
-document.getElementById('btnConfirmarPagamento').addEventListener('click', ()=>{
-  const acc = accounts.find(a=>a.id===payTargetAccId);
-  acc.status='concluida';
-  acc.payment = { method:selectedMethod, date:new Date(TODAY), note:document.getElementById('pagamentoObs').value.trim() };
-  closeModal(modalPagamento);
-  showToast('Pagamento concluído com sucesso.');
-  renderContas(); renderInicio();
-  goTo('contas');
-});
+// ============================================================================
+// TOKEN JWT
+// ============================================================================
 
-/* ---------------- RENDER: HISTÓRICO ---------------- */
-let historicoSearch = '';
-
-function renderHistorico(){
-  let list = closedAccounts().filter(acc=> clientById(acc.clientId).name.toLowerCase().includes(historicoSearch.toLowerCase()));
-  list = list.slice().sort((a,b)=> b.payment.date - a.payment.date);
-
-  document.getElementById('historicoEmpty').hidden = list.length>0;
-
-  const tbody = document.getElementById('tableHistoricoBody');
-  tbody.innerHTML = list.map(acc=>{
-    const cl = clientById(acc.clientId);
-    return `<tr>
-      <td><strong>${cl.name}</strong></td>
-      <td>${BRL(accountTotal(acc))}</td>
-      <td>${fmtDate(acc.payment.date)} às ${fmtHora(acc.payment.date)}</td>
-      <td>${acc.payment.method}</td>
-      <td><div class="row-actions"><button class="btn btn-secondary" data-open-hist="${acc.id}">Ver detalhes</button></div></td>
-    </tr>`;
-  }).join('');
-
-  const grid = document.getElementById('cardsHistoricoMobile');
-  grid.innerHTML = list.map(acc=>{
-    const cl = clientById(acc.clientId);
-    return `<div class="item-card">
-      <div class="item-card-top"><strong>${cl.name}</strong><span class="value">${BRL(accountTotal(acc))}</span></div>
-      <p>${fmtDate(acc.payment.date)} às ${fmtHora(acc.payment.date)} · ${acc.payment.method}</p>
-      <div class="item-actions"><button class="btn btn-secondary" data-open-hist="${acc.id}">Ver detalhes</button></div>
-    </div>`;
-  }).join('');
-
-  [tbody, grid].forEach(wireOpenHistoricoButtons);
-}
-document.getElementById('searchHistorico').addEventListener('input', e=>{ historicoSearch=e.target.value; renderHistorico(); });
-
-function openHistoricoDetalhe(accId){
-  const acc = accounts.find(a=>a.id===accId);
-  const cl = clientById(acc.clientId);
-  document.getElementById('hdNome').textContent = cl.name;
-  document.getElementById('hdMeta').textContent = `Conta nº ${acc.id.toUpperCase()} · Aberta em ${fmtDate(acc.openedAt)} · Concluída em ${fmtDate(acc.payment.date)} às ${fmtHora(acc.payment.date)} · ${acc.payment.method}`;
-
-  const list = document.getElementById('hdPurchasesList');
-  const sorted = acc.purchases.slice().sort((a,b)=>b.date-a.date);
-  list.innerHTML = sorted.map(p=>`
-    <div class="purchase-item">
-      <div>
-        <strong>${p.desc}</strong>
-        <div class="p-meta">${fmtDate(p.date)} às ${fmtHora(p.date)}</div>
-        ${p.note ? `<div class="p-obs">${p.note}</div>` : ''}
-      </div>
-      <span class="purchase-value">${BRL(p.value)}</span>
-    </div>
-  `).join('') + `<div class="purchase-item" style="background:var(--ivory-2);"><strong>Total pago</strong><span class="purchase-value">${BRL(accountTotal(acc))}</span></div>`;
-
-  document.getElementById('btnExportarPDF').onclick = ()=> { showToast('Gerando PDF da conta...', 'file'); window.print(); };
-  document.getElementById('btnImprimir').onclick = ()=> window.print();
-  document.getElementById('btnCompartilhar').onclick = ()=> showToast('Link de compartilhamento copiado.', 'share');
-  document.getElementById('btnNovaContaCliente').onclick = ()=> createAccountForClient(acc.clientId);
-
-  goTo('historico-detalhe');
+function obterToken() {
+  return localStorage.getItem(
+    TOKEN_KEY,
+  );
 }
 
-/* ---------------- RELATÓRIOS ---------------- */
-let reportFilter = 'mes';
-let reportMonth = TODAY.getMonth();
-let reportYear = TODAY.getFullYear();
 
-function setupReportFilters(){
-  const selMes = document.getElementById('selMes');
-  const selAno = document.getElementById('selAno');
-  const mesesOrdenados = [];
-  for(let i=0;i<12;i++){ mesesOrdenados.push((TODAY.getMonth()-i+12)%12); }
-  selMes.innerHTML = mesesOrdenados.map(m=> `<option value="${m}">${MESES[m][0].toUpperCase()+MESES[m].slice(1)}</option>`).join('');
-  selAno.innerHTML = [TODAY.getFullYear(), TODAY.getFullYear()-1].map(y=>`<option value="${y}">${y}</option>`).join('');
-  selMes.value = TODAY.getMonth();
-  selAno.value = TODAY.getFullYear();
+function salvarSessao(
+  token,
+  usuario,
+) {
+  localStorage.setItem(
+    TOKEN_KEY,
+    token,
+  );
 
-  selMes.addEventListener('change', ()=>{ reportMonth=parseInt(selMes.value); reportYear=parseInt(selAno.value); renderRelatorios(); });
-  selAno.addEventListener('change', ()=>{ reportMonth=parseInt(selMes.value); reportYear=parseInt(selAno.value); renderRelatorios(); });
+  localStorage.setItem(
+    USER_KEY,
+    JSON.stringify(usuario),
+  );
+
+  state.usuario =
+    usuario;
 }
 
-document.querySelectorAll('#reportFilters .chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    document.querySelectorAll('#reportFilters .chip').forEach(c=>c.classList.remove('is-active'));
-    chip.classList.add('is-active');
-    reportFilter = chip.dataset.filter;
-    document.getElementById('customFilter').hidden = reportFilter!=='personalizado';
-    renderRelatorios();
-  });
-});
 
-function inReportRange(d){
-  if(reportFilter==='hoje') return isSameDay(d, TODAY);
-  if(reportFilter==='7dias'){
-    const start = new Date(TODAY); start.setDate(start.getDate()-6); start.setHours(0,0,0,0);
-    return d >= start && d <= TODAY;
+function limparSessao() {
+  localStorage.removeItem(
+    TOKEN_KEY,
+  );
+
+  localStorage.removeItem(
+    USER_KEY,
+  );
+
+  state.usuario =
+    null;
+}
+
+
+function carregarUsuarioSalvo() {
+  try {
+    const usuarioSalvo =
+      localStorage.getItem(
+        USER_KEY,
+      );
+
+    state.usuario =
+      usuarioSalvo
+        ? JSON.parse(usuarioSalvo)
+        : null;
+  } catch (erro) {
+    state.usuario =
+      null;
+
+    localStorage.removeItem(
+      USER_KEY,
+    );
   }
-  if(reportFilter==='mes') return d.getMonth()===TODAY.getMonth() && d.getFullYear()===TODAY.getFullYear();
-  if(reportFilter==='personalizado') return d.getMonth()===reportMonth && d.getFullYear()===reportYear;
+}
+
+
+// ============================================================================
+// FUNÇÃO PRINCIPAL PARA ACESSAR A API
+// ============================================================================
+
+async function api(
+  rota,
+  opcoes = {},
+) {
+  const token =
+    obterToken();
+
+  const cabecalhos =
+    new Headers(
+      opcoes.headers || {},
+    );
+
+  if (
+    !(opcoes.body instanceof FormData)
+  ) {
+    cabecalhos.set(
+      "Content-Type",
+      "application/json",
+    );
+  }
+
+  if (token) {
+    cabecalhos.set(
+      "Authorization",
+      `Bearer ${token}`,
+    );
+  }
+
+  let resposta;
+
+  try {
+    resposta = await fetch(
+      `${API_BASE_URL}${rota}`,
+      {
+        ...opcoes,
+        headers:
+          cabecalhos,
+      },
+    );
+  } catch (erro) {
+    throw new Error(
+      "Não foi possível conectar ao servidor. Verifique se o backend está ligado.",
+    );
+  }
+
+  // Se o token estiver vencido ou inválido.
+  if (resposta.status === 401) {
+    limparSessao();
+
+    if (
+      !window.location.pathname.endsWith(
+        "login.html",
+      )
+    ) {
+      window.location.href =
+        "login.html";
+    }
+
+    throw new Error(
+      "Sua sessão expirou. Entre novamente.",
+    );
+  }
+
+  const tipoConteudo =
+    resposta.headers.get(
+      "content-type",
+    ) || "";
+
+  // Respostas em PDF não podem ser convertidas para JSON.
+  if (
+    tipoConteudo.includes(
+      "application/pdf",
+    )
+  ) {
+    if (!resposta.ok) {
+      throw new Error(
+        "Não foi possível gerar o PDF.",
+      );
+    }
+
+    return resposta;
+  }
+
+  let resultado = null;
+
+  try {
+    resultado =
+      await resposta.json();
+  } catch (erro) {
+    resultado =
+      null;
+  }
+
+  if (!resposta.ok) {
+    const erro =
+      new Error(
+        resultado?.mensagem ||
+          `Erro ${resposta.status} ao acessar o servidor.`,
+      );
+
+    erro.status =
+      resposta.status;
+
+    erro.codigo =
+      resultado?.codigo;
+
+    erro.detalhes =
+      resultado?.detalhes;
+
+    throw erro;
+  }
+
+  return resultado;
+}
+
+
+// ============================================================================
+// CARREGAR USUÁRIO DA SESSÃO
+// ============================================================================
+
+async function carregarUsuarioAtual() {
+  const resultado =
+    await api(
+      "/auth/me",
+    );
+
+  state.usuario =
+    resultado.dados.usuario;
+
+  localStorage.setItem(
+    USER_KEY,
+    JSON.stringify(
+      state.usuario,
+    ),
+  );
+
+  atualizarInformacoesUsuario();
+}
+
+
+// ============================================================================
+// MOSTRAR DADOS DO USUÁRIO NA INTERFACE
+// ============================================================================
+
+function atualizarInformacoesUsuario() {
+  if (!state.usuario) {
+    return;
+  }
+
+  const nome =
+    state.usuario.nome ||
+    state.usuario.usuario ||
+    "Usuário";
+
+  const perfil =
+    state.usuario.perfil ===
+    "ADMINISTRADOR"
+      ? "Administrador"
+      : "Atendente";
+
+  elementos(
+    ".mini-profile strong",
+  ).forEach(
+    (elementoHtml) => {
+      elementoHtml.textContent =
+        nome;
+    },
+  );
+
+  elementos(
+    ".mini-profile small",
+  ).forEach(
+    (elementoHtml) => {
+      elementoHtml.textContent =
+        perfil;
+    },
+  );
+
+  elementos(
+    ".avatar",
+  ).forEach(
+    (elementoHtml) => {
+      elementoHtml.textContent =
+        obterIniciais(nome);
+    },
+  );
+
+  const perfilNome =
+    elemento("perfilNome");
+
+  if (perfilNome) {
+    perfilNome.value =
+      nome;
+  }
+
+  const emailPerfil =
+    document.querySelector(
+      ".profile-card .muted",
+    );
+
+  if (emailPerfil) {
+    emailPerfil.textContent =
+      state.usuario.email ||
+      state.usuario.usuario ||
+      "";
+  }
+}
+
+
+// ============================================================================
+// DEBOUNCE
+//
+// Evita chamar a API a cada tecla pressionada.
+// ============================================================================
+
+function debounce(
+  callback,
+  tempo = 300,
+) {
+  let timeout;
+
+  return (...argumentos) => {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(
+      () => {
+        callback(...argumentos);
+      },
+      tempo,
+    );
+  };
+}
+
+
+// ============================================================================
+// ESTADO DE CARREGAMENTO DOS BOTÕES
+// ============================================================================
+
+function definirCarregamentoBotao(
+  botao,
+  carregando,
+  textoCarregando =
+    "Carregando...",
+) {
+  if (!botao) {
+    return;
+  }
+
+  if (carregando) {
+    botao.dataset.textoOriginal =
+      botao.innerHTML;
+
+    botao.disabled =
+      true;
+
+    botao.textContent =
+      textoCarregando;
+
+    return;
+  }
+
+  botao.disabled =
+    false;
+
+  if (
+    botao.dataset.textoOriginal
+  ) {
+    botao.innerHTML =
+      botao.dataset.textoOriginal;
+
+    delete botao.dataset
+      .textoOriginal;
+
+    paintIcons(botao);
+  }
+}
+
+
+// ============================================================================
+// ABRIR E FECHAR MODAIS
+// ============================================================================
+
+function abrirModal(modal) {
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.add(
+    "is-open",
+  );
+
+  paintIcons(modal);
+}
+
+
+function fecharModal(modal) {
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove(
+    "is-open",
+  );
+}
+
+
+// ============================================================================
+// EVENTOS PADRÃO DOS MODAIS
+// ============================================================================
+
+elementos(
+  ".modal-overlay",
+).forEach(
+  (modal) => {
+    modal.addEventListener(
+      "click",
+      (evento) => {
+        if (
+          evento.target === modal
+        ) {
+          fecharModal(modal);
+        }
+      },
+    );
+
+    elementos(
+      "[data-close]",
+      modal,
+    ).forEach(
+      (botao) => {
+        botao.addEventListener(
+          "click",
+          () => {
+            fecharModal(modal);
+          },
+        );
+      },
+    );
+  },
+);
+
+// ============================================================================
+// PARTE 2
+// NAVEGAÇÃO, MENU MOBILE, TEMA E LOGOUT
+// ============================================================================
+
+
+// ============================================================================
+// TÍTULOS DAS PÁGINAS
+// ============================================================================
+
+const TITULOS_PAGINAS = {
+  inicio: {
+    titulo: "Início",
+    subtitulo: "Visão geral da sua loja",
+  },
+
+  contas: {
+    titulo: "Contas",
+    subtitulo: "Contas abertas e fechadas aguardando pagamento",
+  },
+
+  "conta-detalhe": {
+    titulo: "Detalhes da conta",
+    subtitulo: "Compras e movimentações desta conta",
+  },
+
+  historico: {
+    titulo: "Histórico",
+    subtitulo: "Contas que já foram pagas",
+  },
+
+  "historico-detalhe": {
+    titulo: "Detalhes do histórico",
+    subtitulo: "Consulta da conta finalizada",
+  },
+
+  relatorios: {
+    titulo: "Relatórios",
+    subtitulo: "Desempenho financeiro da loja",
+  },
+
+  configuracoes: {
+    titulo: "Configurações",
+    subtitulo: "Preferências da loja e do sistema",
+  },
+
+  perfil: {
+    titulo: "Perfil",
+    subtitulo: "Dados do usuário conectado",
+  },
+};
+
+
+// ============================================================================
+// IR PARA UMA PÁGINA
+// ============================================================================
+
+async function irParaPagina(nomePagina) {
+  const paginaDestino =
+    elemento(`page-${nomePagina}`);
+
+  if (!paginaDestino) {
+    console.error(
+      `Página não encontrada: ${nomePagina}`,
+    );
+
+    return;
+  }
+
+  // Esconde todas as páginas.
+  elementos(".page").forEach(
+    (pagina) => {
+      pagina.classList.remove(
+        "is-active",
+      );
+    },
+  );
+
+  // Mostra a página escolhida.
+  paginaDestino.classList.add(
+    "is-active",
+  );
+
+  // Atualiza o menu lateral.
+  elementos(
+    ".nav-item[data-page]",
+  ).forEach(
+    (botao) => {
+      botao.classList.toggle(
+        "is-active",
+        botao.dataset.page ===
+          nomePagina,
+      );
+    },
+  );
+
+  // Atualiza o menu inferior mobile.
+  elementos(
+    ".bn-item[data-page]",
+  ).forEach(
+    (botao) => {
+      botao.classList.toggle(
+        "is-active",
+        botao.dataset.page ===
+          nomePagina,
+      );
+    },
+  );
+
+  const configuracaoPagina =
+    TITULOS_PAGINAS[
+      nomePagina
+    ] || {
+      titulo: "",
+      subtitulo: "",
+    };
+
+  definirTexto(
+    "pageTitle",
+    configuracaoPagina.titulo,
+  );
+
+  definirTexto(
+    "pageSubtitle",
+    configuracaoPagina.subtitulo,
+  );
+
+  state.paginaAtual =
+    nomePagina;
+
+  fecharMenuMais();
+
+  try {
+    /*
+      Essas funções serão criadas nas próximas partes.
+
+      O typeof evita erro enquanto elas ainda não foram adicionadas.
+    */
+
+    if (
+      nomePagina === "inicio" &&
+      typeof carregarDashboard ===
+        "function"
+    ) {
+      await carregarDashboard();
+    }
+
+    if (
+      nomePagina === "contas" &&
+      typeof carregarContas ===
+        "function"
+    ) {
+      await carregarContas();
+    }
+
+    if (
+      nomePagina ===
+        "historico" &&
+      typeof carregarHistorico ===
+        "function"
+    ) {
+      await carregarHistorico();
+    }
+
+    if (
+      nomePagina ===
+        "relatorios" &&
+      typeof carregarRelatorios ===
+        "function"
+    ) {
+      await carregarRelatorios();
+    }
+
+    if (
+      nomePagina ===
+        "configuracoes" &&
+      typeof carregarConfiguracoes ===
+        "function"
+    ) {
+      await carregarConfiguracoes();
+    }
+
+    if (
+      nomePagina === "perfil"
+    ) {
+      atualizarInformacoesUsuario();
+    }
+  } catch (erro) {
+    console.error(erro);
+
+    mostrarToast(
+      erro.message ||
+        "Não foi possível carregar a página.",
+      "close",
+    );
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
+
+// ============================================================================
+// EVENTOS DOS BOTÕES DE NAVEGAÇÃO
+// ============================================================================
+
+elementos(
+  "[data-page]",
+).forEach(
+  (botao) => {
+    botao.addEventListener(
+      "click",
+      () => {
+        const pagina =
+          botao.dataset.page;
+
+        if (pagina) {
+          irParaPagina(
+            pagina,
+          );
+        }
+      },
+    );
+  },
+);
+
+
+// ============================================================================
+// BOTÕES DE VOLTAR
+// ============================================================================
+
+elementos(
+  "[data-back]",
+).forEach(
+  (botao) => {
+    botao.addEventListener(
+      "click",
+      () => {
+        const pagina =
+          botao.dataset.back;
+
+        if (pagina) {
+          irParaPagina(
+            pagina,
+          );
+        }
+      },
+    );
+  },
+);
+
+
+// ============================================================================
+// MENU "MAIS" NO CELULAR
+// ============================================================================
+
+const menuMaisOverlay =
+  elemento("maisOverlay");
+
+
+function abrirMenuMais() {
+  if (!menuMaisOverlay) {
+    return;
+  }
+
+  menuMaisOverlay.classList.add(
+    "is-open",
+  );
+
+  paintIcons(
+    menuMaisOverlay,
+  );
+}
+
+
+function fecharMenuMais() {
+  if (!menuMaisOverlay) {
+    return;
+  }
+
+  menuMaisOverlay.classList.remove(
+    "is-open",
+  );
+}
+
+
+const botaoMais =
+  elemento("btnMais");
+
+if (botaoMais) {
+  botaoMais.addEventListener(
+    "click",
+    abrirMenuMais,
+  );
+}
+
+
+if (menuMaisOverlay) {
+  menuMaisOverlay.addEventListener(
+    "click",
+    (evento) => {
+      if (
+        evento.target ===
+        menuMaisOverlay
+      ) {
+        fecharMenuMais();
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// TEMA CLARO E ESCURO
+// ============================================================================
+
+function aplicarTema(tema) {
+  const temaValido =
+    tema === "dark"
+      ? "dark"
+      : "light";
+
+  document.documentElement
+    .setAttribute(
+      "data-theme",
+      temaValido,
+    );
+
+  localStorage.setItem(
+    THEME_KEY,
+    temaValido,
+  );
+
+  const seletorTema =
+    elemento(
+      "darkModeToggle",
+    );
+
+  if (seletorTema) {
+    seletorTema.checked =
+      temaValido === "dark";
+  }
+}
+
+
+function carregarTemaSalvo() {
+  const temaSalvo =
+    localStorage.getItem(
+      THEME_KEY,
+    );
+
+  if (temaSalvo) {
+    aplicarTema(
+      temaSalvo,
+    );
+
+    return;
+  }
+
+  /*
+    Caso ainda não exista preferência salva,
+    usa o tema configurado no sistema operacional.
+  */
+
+  const prefereEscuro =
+    window.matchMedia &&
+    window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+  aplicarTema(
+    prefereEscuro
+      ? "dark"
+      : "light",
+  );
+}
+
+
+const seletorTema =
+  elemento(
+    "darkModeToggle",
+  );
+
+if (seletorTema) {
+  seletorTema.addEventListener(
+    "change",
+    (evento) => {
+      aplicarTema(
+        evento.target.checked
+          ? "dark"
+          : "light",
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// MODAL DE SAÍDA
+// ============================================================================
+
+const modalSair =
+  elemento("modalSair");
+
+
+const botaoSair =
+  elemento("btnSair");
+
+
+const botaoSairMais =
+  elemento("btnSairMais");
+
+
+const botaoConfirmarSair =
+  elemento(
+    "btnConfirmarSair",
+  );
+
+
+if (botaoSair) {
+  botaoSair.addEventListener(
+    "click",
+    () => {
+      abrirModal(
+        modalSair,
+      );
+    },
+  );
+}
+
+
+if (botaoSairMais) {
+  botaoSairMais.addEventListener(
+    "click",
+    () => {
+      fecharMenuMais();
+
+      abrirModal(
+        modalSair,
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// REALIZAR LOGOUT
+// ============================================================================
+
+async function realizarLogout() {
+  try {
+    /*
+      Tenta avisar o backend que o usuário saiu.
+
+      Mesmo que essa chamada falhe, a sessão local será apagada.
+    */
+
+    if (obterToken()) {
+      await api(
+        "/auth/logout",
+        {
+          method: "POST",
+        },
+      );
+    }
+  } catch (erro) {
+    console.warn(
+      "Não foi possível registrar o logout no servidor:",
+      erro.message,
+    );
+  } finally {
+    limparSessao();
+
+    fecharModal(
+      modalSair,
+    );
+
+    window.location.href =
+      "login.html";
+  }
+}
+
+
+if (botaoConfirmarSair) {
+  botaoConfirmarSair.addEventListener(
+    "click",
+    realizarLogout,
+  );
+}
+
+
+// ============================================================================
+// ATUALIZAR PERFIL VISUAL
+// ============================================================================
+
+function atualizarPerfilVisual() {
+  atualizarInformacoesUsuario();
+
+  if (!state.usuario) {
+    return;
+  }
+
+  const campoNome =
+    elemento("perfilNome");
+
+  if (campoNome) {
+    campoNome.value =
+      state.usuario.nome || "";
+  }
+
+  const campoTelefone =
+    elemento(
+      "perfilTelefone",
+    );
+
+  /*
+    A tabela de usuários atual ainda não possui telefone.
+
+    Por isso, o campo permanece vazio até adicionarmos essa informação
+    ao banco ou utilizarmos o telefone da loja.
+  */
+
+  if (campoTelefone) {
+    campoTelefone.value =
+      state.usuario.telefone || "";
+  }
+}
+
+
+// ============================================================================
+// PROTEGER A PÁGINA
+// ============================================================================
+
+function verificarSessaoAntesDeIniciar() {
+  const token =
+    obterToken();
+
+  if (!token) {
+    window.location.href =
+      "login.html";
+
+    return false;
+  }
+
   return true;
 }
 
-function renderRelatorios(){
-  const pagos = closedAccounts().filter(a=> inReportRange(a.payment.date));
-  const faturamento = pagos.reduce((s,a)=>s+accountTotal(a),0);
 
-  const abertas = pendingAccounts();
-  const aReceber = abertas.reduce((s,a)=>s+accountTotal(a),0);
+// ============================================================================
+// INICIALIZAÇÃO VISUAL DESTA PARTE
+// ============================================================================
 
-  document.getElementById('repFaturamento').textContent = BRL(faturamento);
-  document.getElementById('repAReceber').textContent = BRL(aReceber);
-  document.getElementById('repQtdPagos').textContent = pagos.length;
-  document.getElementById('repQtdAbertas').textContent = abertas.length;
+function iniciarInterfaceBasica() {
+  paintIcons();
 
-  /* formas de pagamento */
-  const methods = { 'Dinheiro':0, 'Pix':0, 'Cartão':0 };
-  const methodCount = { 'Dinheiro':0, 'Pix':0, 'Cartão':0 };
-  pagos.forEach(a=>{ methods[a.payment.method]+= accountTotal(a); methodCount[a.payment.method]++; });
-  const total = Object.values(methods).reduce((a,b)=>a+b,0) || 1;
-  const colors = { 'Dinheiro':'#2E9B5C', 'Pix':'#3E7BC4', 'Cartão':'#C68A4E' };
+  carregarTemaSalvo();
 
-  let acc0 = 0;
-  const segs = Object.entries(methods).map(([k,v])=>{
-    const frac = v/total;
-    const seg = { key:k, frac, start:acc0 };
-    acc0 += frac;
-    return seg;
-  });
-  const R = 50, C = 60;
-  const circumference = 2*Math.PI*R;
-  const donut = document.getElementById('donutChart');
-  donut.innerHTML = `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="var(--line)" stroke-width="14"/>` +
-    segs.filter(s=>s.frac>0).map(s=>{
-      const dash = circumference*s.frac;
-      const gap = circumference-dash;
-      const offset = -circumference*s.start;
-      return `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${colors[s.key]}" stroke-width="14"
-        stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${offset}" transform="rotate(-90 ${C} ${C})" stroke-linecap="butt"/>`;
-    }).join('') +
-    `<text x="${C}" y="${C-2}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">${BRL(total===1&&faturamento===0?0:faturamento)}</text>
-     <text x="${C}" y="${C+14}" text-anchor="middle" font-size="8.5" fill="var(--ink-faint)">recebido</text>`;
+  carregarUsuarioSalvo();
 
-  document.getElementById('donutLegend').innerHTML = Object.entries(methods).map(([k,v])=>`
-    <div class="legend-row">
-      <span class="legend-dot" style="background:${colors[k]}"></span>
-      <span>${k} <span class="legend-sub">(${methodCount[k]} pagto.)</span></span>
-      <strong>${BRL(v)}</strong>
-    </div>
-  `).join('');
-
-  /* ranking clientes */
-  const totals = {};
-  const counts = {};
-  pagos.forEach(a=>{ totals[a.clientId]=(totals[a.clientId]||0)+accountTotal(a); counts[a.clientId]=(counts[a.clientId]||0)+1; });
-  const ranking = Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  document.getElementById('rankingList').innerHTML = ranking.length ? ranking.map(([clientId,total],i)=>{
-    const cl = clientById(clientId);
-    return `<div class="rank-row">
-      <span class="rank-pos">${i+1}</span>
-      <div class="rank-name"><strong>${cl.name}</strong><small>${counts[clientId]} conta(s) concluída(s)</small></div>
-      <span class="rank-value">${BRL(total)}</span>
-    </div>`;
-  }).join('') : `<p class="muted">Nenhum pagamento no período selecionado.</p>`;
+  atualizarPerfilVisual();
 }
 
-/* ---------------- MODAIS: helpers genéricos ---------------- */
-function openModal(el){ el.classList.add('is-open'); paintIcons(el); }
-function closeModal(el){ el.classList.remove('is-open'); }
-document.querySelectorAll('.modal-overlay').forEach(ov=>{
-  ov.addEventListener('click', e=>{ if(e.target===ov) closeModal(ov); });
-  ov.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', ()=> closeModal(ov)));
-});
+// ============================================================================
+// PARTE 3
+// DASHBOARD / PÁGINA INICIAL
+// ============================================================================
 
-/* ---------------- SHEET "MAIS" (mobile) ---------------- */
-const maisOverlay = document.getElementById('maisOverlay');
-document.getElementById('btnMais').addEventListener('click', ()=> maisOverlay.classList.add('is-open'));
-maisOverlay.addEventListener('click', e=>{ if(e.target===maisOverlay) closeSheet(); });
-function closeSheet(){ maisOverlay.classList.remove('is-open'); }
 
-/* ---------------- SAIR ---------------- */
-const modalSair = document.getElementById('modalSair');
-document.getElementById('btnSair').addEventListener('click', ()=> openModal(modalSair));
-document.getElementById('btnSairMais').addEventListener('click', ()=> { closeSheet(); openModal(modalSair); });
-document.getElementById('btnConfirmarSair').addEventListener('click', ()=>{
-  closeModal(modalSair);
-  showToast('Sessão encerrada. Até logo!', 'exit');
-});
+// ============================================================================
+// ATUALIZAR TEXTO E BOTÕES DO MÊS
+// ============================================================================
 
-/* ---------------- MODO ESCURO ---------------- */
-document.getElementById('darkModeToggle').addEventListener('change', e=>{
-  document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : 'light');
-});
+function atualizarNavegacaoMesDashboard() {
+  definirTexto(
+    "homeMonthLabel",
+    formatarCompetencia(
+      state.dashboard.ano,
+      state.dashboard.mes,
+    ),
+  );
 
-/* ---------------- NAVEGAÇÃO DE MÊS (Início) ---------------- */
-document.getElementById('btnMesAnterior').addEventListener('click', ()=>{
-  homeMonth--; if(homeMonth<0){ homeMonth=11; homeYear--; }
-  renderInicio();
-});
-document.getElementById('btnMesProximo').addEventListener('click', (e)=>{
-  if(e.currentTarget.disabled) return;
-  homeMonth++; if(homeMonth>11){ homeMonth=0; homeYear++; }
-  renderInicio();
-});
-document.getElementById('btnMesAtual').addEventListener('click', ()=>{
-  homeMonth = TODAY.getMonth(); homeYear = TODAY.getFullYear();
-  renderInicio();
-});
+  const dataAtual =
+    new Date();
 
-/* ---------------- INICIALIZAÇÃO ---------------- */
-autoCloseAccounts();
-paintIcons();
-setupReportFilters();
-renderInicio();
-renderContas();
-renderHistorico();
-renderRelatorios();
-goTo('inicio');
+  const anoAtual =
+    dataAtual.getFullYear();
+
+  const mesAtual =
+    dataAtual.getMonth() + 1;
+
+  const estaNoMesAtual =
+    state.dashboard.ano === anoAtual &&
+    state.dashboard.mes === mesAtual;
+
+  definirDesabilitado(
+    "btnMesProximo",
+    estaNoMesAtual,
+    estaNoMesAtual
+      ? "Você já está no mês atual."
+      : "",
+  );
+
+  definirOculto(
+    "btnMesAtual",
+    estaNoMesAtual,
+  );
+}
+
+
+// ============================================================================
+// CARREGAR DASHBOARD
+// ============================================================================
+
+async function carregarDashboard() {
+  atualizarNavegacaoMesDashboard();
+
+  const parametros =
+    new URLSearchParams({
+      ano:
+        state.dashboard.ano,
+
+      mes:
+        state.dashboard.mes,
+    });
+
+  const resultado =
+    await api(
+      `/dashboard?${parametros.toString()}`,
+    );
+
+  const dados =
+    resultado.dados || {};
+
+  const cards =
+    dados.cards || {};
+
+  const movimentacoes =
+    dados.ultimas_movimentacoes || [];
+
+  renderizarCardsDashboard(
+    cards,
+  );
+
+  renderizarUltimasMovimentacoes(
+    movimentacoes,
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR CARDS DO DASHBOARD
+// ============================================================================
+
+function renderizarCardsDashboard(
+  cards,
+) {
+  definirTexto(
+    "statClientes",
+    cards.clientes_cadastrados ?? 0,
+  );
+
+  definirTexto(
+    "statAReceber",
+    formatarMoeda(
+      cards.total_a_receber,
+    ),
+  );
+
+  definirTexto(
+    "statConcluidos",
+    formatarMoeda(
+      cards.total_recebido,
+    ),
+  );
+
+  definirTexto(
+    "statAReceberMes",
+    `${
+      cards.contas_abertas ?? 0
+    } aberta(s) e ${
+      cards.contas_fechadas ?? 0
+    } fechada(s)`,
+  );
+
+  definirTexto(
+    "statConcluidosMes",
+    `${
+      cards.pagamentos_concluidos ?? 0
+    } pagamento(s) concluído(s)`,
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR AS ÚLTIMAS CINCO MOVIMENTAÇÕES
+// ============================================================================
+
+function renderizarUltimasMovimentacoes(
+  movimentacoes,
+) {
+  const lista =
+    elemento("movesList");
+
+  if (!lista) {
+    return;
+  }
+
+  if (
+    movimentacoes.length === 0
+  ) {
+    lista.innerHTML = `
+      <div class="empty-state">
+
+        <span
+          class="ico ico-lg"
+          data-ico="wallet"
+        ></span>
+
+        <h3>
+          Nenhuma movimentação recente
+        </h3>
+
+        <p>
+          As contas com novas compras aparecerão aqui.
+        </p>
+
+      </div>
+    `;
+
+    paintIcons(lista);
+
+    return;
+  }
+
+  lista.innerHTML =
+    movimentacoes
+      .map(
+        (movimentacao) => {
+          const nomeCliente =
+            movimentacao.cliente_nome ||
+            "Cliente";
+
+          const descricao =
+            movimentacao.ultima_descricao ||
+            movimentacao.descricao ||
+            "Compra registrada";
+
+          const valorUltimaCompra =
+            movimentacao.ultimo_valor ??
+            movimentacao.valor ??
+            0;
+
+          const dataUltimaCompra =
+            movimentacao.ultima_movimentacao ||
+            movimentacao.data_compra;
+
+          const totalConta =
+            movimentacao.total_conta ??
+            0;
+
+          return `
+            <div class="move-item">
+
+              <div class="move-main">
+
+                <span class="move-avatar">
+                  ${escaparHtml(
+                    obterIniciais(
+                      nomeCliente,
+                    ),
+                  )}
+                </span>
+
+                <div class="move-text">
+
+                  <strong>
+                    ${escaparHtml(
+                      nomeCliente,
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escaparHtml(
+                      descricao,
+                    )}
+                  </span>
+
+                  <small>
+                    Última compra:
+                    ${formatarMoeda(
+                      valorUltimaCompra,
+                    )}
+                    ·
+                    ${formatarDataHora(
+                      dataUltimaCompra,
+                    )}
+                  </small>
+
+                </div>
+
+              </div>
+
+              <div class="move-right">
+
+                <strong>
+                  Total:
+                  ${formatarMoeda(
+                    totalConta,
+                  )}
+                </strong>
+
+                <button
+                  class="btn btn-secondary"
+                  data-open-acc="${
+                    movimentacao.conta_id
+                  }"
+                >
+                  Ver conta
+                </button>
+
+              </div>
+
+            </div>
+          `;
+        },
+      )
+      .join("");
+
+  conectarBotoesAbrirConta(
+    lista,
+  );
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES "VER CONTA"
+//
+// A função abrirDetalhesConta será criada na parte de contas.
+// ============================================================================
+
+function conectarBotoesAbrirConta(
+  raiz,
+) {
+  elementos(
+    "[data-open-acc]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        async () => {
+          const contaId =
+            botao.dataset.openAcc;
+
+          if (
+            typeof abrirDetalhesConta !==
+            "function"
+          ) {
+            mostrarToast(
+              "A tela de detalhes da conta ainda não foi adicionada.",
+              "close",
+            );
+
+            return;
+          }
+
+          try {
+            await abrirDetalhesConta(
+              contaId,
+            );
+          } catch (erro) {
+            mostrarToast(
+              erro.message ||
+                "Não foi possível abrir a conta.",
+              "close",
+            );
+          }
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// MÊS ANTERIOR
+// ============================================================================
+
+const botaoMesAnterior =
+  elemento(
+    "btnMesAnterior",
+  );
+
+if (botaoMesAnterior) {
+  botaoMesAnterior.addEventListener(
+    "click",
+    async () => {
+      state.dashboard.mes -= 1;
+
+      if (
+        state.dashboard.mes < 1
+      ) {
+        state.dashboard.mes =
+          12;
+
+        state.dashboard.ano -=
+          1;
+      }
+
+      try {
+        await carregarDashboard();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível carregar o mês anterior.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// PRÓXIMO MÊS
+//
+// Nunca permite avançar além do mês atual.
+// ============================================================================
+
+const botaoMesProximo =
+  elemento(
+    "btnMesProximo",
+  );
+
+if (botaoMesProximo) {
+  botaoMesProximo.addEventListener(
+    "click",
+    async () => {
+      const dataAtual =
+        new Date();
+
+      const competenciaSelecionada =
+        new Date(
+          state.dashboard.ano,
+          state.dashboard.mes - 1,
+          1,
+        );
+
+      const competenciaAtual =
+        new Date(
+          dataAtual.getFullYear(),
+          dataAtual.getMonth(),
+          1,
+        );
+
+      if (
+        competenciaSelecionada >=
+        competenciaAtual
+      ) {
+        return;
+      }
+
+      state.dashboard.mes += 1;
+
+      if (
+        state.dashboard.mes > 12
+      ) {
+        state.dashboard.mes =
+          1;
+
+        state.dashboard.ano +=
+          1;
+      }
+
+      try {
+        await carregarDashboard();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível carregar o próximo mês.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// VOLTAR AO MÊS ATUAL
+// ============================================================================
+
+const botaoMesAtual =
+  elemento(
+    "btnMesAtual",
+  );
+
+if (botaoMesAtual) {
+  botaoMesAtual.addEventListener(
+    "click",
+    async () => {
+      const dataAtual =
+        new Date();
+
+      state.dashboard.ano =
+        dataAtual.getFullYear();
+
+      state.dashboard.mes =
+        dataAtual.getMonth() + 1;
+
+      try {
+        await carregarDashboard();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível retornar ao mês atual.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+// ============================================================================
+// PARTE 4
+// LISTAGEM DE CONTAS, PESQUISA E ORDENAÇÃO
+// ============================================================================
+
+
+// ============================================================================
+// CARREGAR CONTAS
+// ============================================================================
+
+async function carregarContas() {
+  const parametros =
+    new URLSearchParams({
+      pesquisa:
+        state.contas.pesquisa,
+
+      ordenacao:
+        state.contas.ordenacao,
+
+      pagina:
+        state.contas.pagina,
+
+      limite:
+        state.contas.limite,
+    });
+
+  const resultado =
+    await api(
+      `/contas?${parametros.toString()}`,
+    );
+
+  const contas =
+    resultado.dados || [];
+
+  renderizarContas(
+    contas,
+  );
+}
+
+
+// ============================================================================
+// CRIAR BADGE DE STATUS
+// ============================================================================
+
+function criarBadgeConta(status) {
+  const classe =
+    status === "FECHADA"
+      ? "badge-closed"
+      : "badge-open";
+
+  return `
+    <span class="badge ${classe}">
+      ${escaparHtml(
+        formatarStatusConta(
+          status,
+        ),
+      )}
+    </span>
+  `;
+}
+
+
+// ============================================================================
+// RENDERIZAR CONTAS
+// ============================================================================
+
+function renderizarContas(contas) {
+  definirOculto(
+    "contasEmpty",
+    contas.length > 0,
+  );
+
+  const corpoTabela =
+    elemento(
+      "tableContasBody",
+    );
+
+  const listaMobile =
+    elemento(
+      "cardsContasMobile",
+    );
+
+  if (corpoTabela) {
+    corpoTabela.innerHTML =
+      contas
+        .map(
+          (conta) =>
+            criarLinhaConta(
+              conta,
+            ),
+        )
+        .join("");
+  }
+
+  if (listaMobile) {
+    listaMobile.innerHTML =
+      contas
+        .map(
+          (conta) =>
+            criarCardConta(
+              conta,
+            ),
+        )
+        .join("");
+  }
+
+  [
+    corpoTabela,
+    listaMobile,
+  ]
+    .filter(Boolean)
+    .forEach(
+      (raiz) => {
+        conectarBotoesAbrirConta(
+          raiz,
+        );
+
+        conectarBotoesAdicionarCompra(
+          raiz,
+        );
+      },
+    );
+}
+
+
+// ============================================================================
+// CRIAR LINHA DA TABELA
+// ============================================================================
+
+function criarLinhaConta(conta) {
+  const contaAberta =
+    conta.status ===
+    "ABERTA";
+
+  const tituloBotao =
+    contaAberta
+      ? ""
+      : "Conta fechada aguardando pagamento.";
+
+  return `
+    <tr>
+
+      <td>
+        <strong>
+          ${escaparHtml(
+            conta.cliente_nome,
+          )}
+        </strong>
+      </td>
+
+      <td>
+        ${criarBadgeConta(
+          conta.status,
+        )}
+      </td>
+
+      <td>
+        ${formatarData(
+          conta.data_abertura,
+        )}
+      </td>
+
+      <td>
+        ${
+          conta.ultima_compra
+            ? formatarDataHora(
+                conta.ultima_compra,
+              )
+            : "—"
+        }
+      </td>
+
+      <td>
+        ${
+          conta.quantidade_registros ??
+          0
+        }
+      </td>
+
+      <td>
+        <strong>
+          ${formatarMoeda(
+            conta.total_conta,
+          )}
+        </strong>
+      </td>
+
+      <td>
+
+        <div class="row-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-open-acc="${
+              conta.id
+            }"
+          >
+            Ver conta
+          </button>
+
+          <button
+            class="btn btn-primary"
+            data-add-compra="${
+              conta.id
+            }"
+            ${
+              contaAberta
+                ? ""
+                : "disabled"
+            }
+            title="${tituloBotao}"
+          >
+            ${
+              contaAberta
+                ? "Adicionar compra"
+                : "Fechada"
+            }
+          </button>
+
+        </div>
+
+      </td>
+
+    </tr>
+  `;
+}
+
+
+// ============================================================================
+// CRIAR CARD MOBILE
+// ============================================================================
+
+function criarCardConta(conta) {
+  const contaAberta =
+    conta.status ===
+    "ABERTA";
+
+  return `
+    <div class="item-card">
+
+      <div class="item-card-top">
+
+        <strong>
+          ${escaparHtml(
+            conta.cliente_nome,
+          )}
+        </strong>
+
+        <span class="value">
+          ${formatarMoeda(
+            conta.total_conta,
+          )}
+        </span>
+
+      </div>
+
+      <p>
+        ${criarBadgeConta(
+          conta.status,
+        )}
+      </p>
+
+      <p>
+        Conta aberta em
+        ${formatarData(
+          conta.data_abertura,
+        )}
+      </p>
+
+      <p>
+        ${
+          conta.ultima_compra
+            ? `Última compra: ${formatarDataHora(
+                conta.ultima_compra,
+              )}`
+            : "Sem compras registradas"
+        }
+      </p>
+
+      <p>
+        ${
+          conta.quantidade_registros ??
+          0
+        }
+        registro(s)
+      </p>
+
+      <div class="item-actions">
+
+        <button
+          class="btn btn-secondary"
+          data-open-acc="${
+            conta.id
+          }"
+        >
+          Ver conta
+        </button>
+
+        <button
+          class="btn btn-primary"
+          data-add-compra="${
+            conta.id
+          }"
+          ${
+            contaAberta
+              ? ""
+              : "disabled"
+          }
+        >
+          ${
+            contaAberta
+              ? "Adicionar compra"
+              : "Fechada"
+          }
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES "ADICIONAR COMPRA"
+//
+// A função abrirModalCompra será criada na próxima parte.
+// ============================================================================
+
+function conectarBotoesAdicionarCompra(
+  raiz,
+) {
+  elementos(
+    "[data-add-compra]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        async (evento) => {
+          evento.stopPropagation();
+
+          if (
+            botao.disabled
+          ) {
+            return;
+          }
+
+          const contaId =
+            botao.dataset.addCompra;
+
+          if (
+            typeof abrirModalCompra !==
+            "function"
+          ) {
+            mostrarToast(
+              "O formulário de compra ainda não foi adicionado.",
+              "close",
+            );
+
+            return;
+          }
+
+          abrirModalCompra(
+            contaId,
+          );
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// PESQUISAR CONTAS
+// ============================================================================
+
+const campoPesquisaContas =
+  elemento(
+    "searchContas",
+  );
+
+if (campoPesquisaContas) {
+  campoPesquisaContas.addEventListener(
+    "input",
+    debounce(
+      async (evento) => {
+        state.contas.pesquisa =
+          evento.target.value.trim();
+
+        state.contas.pagina =
+          1;
+
+        try {
+          await carregarContas();
+        } catch (erro) {
+          mostrarToast(
+            erro.message ||
+              "Não foi possível pesquisar as contas.",
+            "close",
+          );
+        }
+      },
+      350,
+    ),
+  );
+}
+
+
+// ============================================================================
+// ORDENAR CONTAS
+// ============================================================================
+
+const seletorOrdenacaoContas =
+  elemento(
+    "sortContas",
+  );
+
+if (seletorOrdenacaoContas) {
+  seletorOrdenacaoContas.addEventListener(
+    "change",
+    async (evento) => {
+      state.contas.ordenacao =
+        evento.target.value;
+
+      state.contas.pagina =
+        1;
+
+      try {
+        await carregarContas();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível ordenar as contas.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// GARANTIR VALOR CORRETO DO SELECT
+//
+// O backend aceita:
+//
+// mais_recente
+// mais_antiga
+// maior_valor
+// menor_valor
+// ============================================================================
+
+if (seletorOrdenacaoContas) {
+  seletorOrdenacaoContas.value =
+    state.contas.ordenacao;
+}
+
+// ============================================================================
+// PARTE 5
+// DETALHES DA CONTA, ADICIONAR, EDITAR E EXCLUIR COMPRAS
+// ============================================================================
+
+
+// ============================================================================
+// ABRIR DETALHES DA CONTA
+// ============================================================================
+
+async function abrirDetalhesConta(contaId) {
+  const resultado =
+    await api(
+      `/contas/${contaId}`,
+    );
+
+  const dados =
+    resultado.dados;
+
+  const conta =
+    dados.conta;
+
+  const compras =
+    dados.compras || [];
+
+  state.contaAtual =
+    conta;
+
+  definirTexto(
+    "dcNome",
+    conta.cliente_nome,
+  );
+
+  definirTexto(
+    "dcMeta",
+    `Aberta em ${formatarData(
+      conta.data_abertura,
+    )} · Última movimentação: ${
+      conta.ultima_compra
+        ? formatarDataHora(
+            conta.ultima_compra,
+          )
+        : "—"
+    }`,
+  );
+
+  definirTexto(
+    "dcTotal",
+    formatarMoeda(
+      conta.total_conta,
+    ),
+  );
+
+  const contaFechada =
+    conta.status ===
+    "FECHADA";
+
+  definirOculto(
+    "dcClosedBanner",
+    !contaFechada,
+  );
+
+  definirDesabilitado(
+    "btnAddCompra",
+    !dados.pode_adicionar_compra,
+    contaFechada
+      ? "Esta conta está fechada e não aceita novas compras."
+      : "",
+  );
+
+  const contaSemCompras =
+    converterNumero(
+      conta.total_conta,
+    ) <= 0;
+
+  definirDesabilitado(
+    "btnConcluirPagamento",
+    !dados.pode_concluir_pagamento ||
+      contaSemCompras,
+    contaSemCompras
+      ? "Adicione pelo menos uma compra antes de concluir o pagamento."
+      : "",
+  );
+
+  renderizarComprasConta(
+    compras,
+    conta.status,
+  );
+
+  await irParaPagina(
+    "conta-detalhe",
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR COMPRAS DA CONTA
+// ============================================================================
+
+function renderizarComprasConta(
+  compras,
+  statusConta,
+) {
+  const lista =
+    elemento(
+      "purchasesList",
+    );
+
+  if (!lista) {
+    return;
+  }
+
+  if (
+    compras.length === 0
+  ) {
+    lista.innerHTML = `
+      <div class="empty-state">
+
+        <span
+          class="ico ico-lg"
+          data-ico="wallet"
+        ></span>
+
+        <h3>
+          Nenhuma compra registrada
+        </h3>
+
+        <p>
+          Adicione a primeira compra desta conta.
+        </p>
+
+      </div>
+    `;
+
+    paintIcons(lista);
+
+    return;
+  }
+
+  const podeEditar =
+    statusConta ===
+    "ABERTA";
+
+  const comprasOrdenadas =
+    [...compras].sort(
+      (compraA, compraB) =>
+        new Date(
+          compraB.data_compra,
+        ) -
+        new Date(
+          compraA.data_compra,
+        ),
+    );
+
+  lista.innerHTML =
+    comprasOrdenadas
+      .map(
+        (compra) => `
+          <div class="purchase-item">
+
+            <div>
+
+              <strong>
+                ${escaparHtml(
+                  compra.descricao,
+                )}
+              </strong>
+
+              <div class="p-meta">
+                ${formatarData(
+                  compra.data_compra,
+                )}
+                às
+                ${formatarHora(
+                  compra.data_compra,
+                )}
+              </div>
+
+              ${
+                compra.observacao
+                  ? `
+                    <div class="p-obs">
+                      ${escaparHtml(
+                        compra.observacao,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+            </div>
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:14px;
+              "
+            >
+
+              <span class="purchase-value">
+                ${formatarMoeda(
+                  compra.valor,
+                )}
+              </span>
+
+              ${
+                podeEditar
+                  ? `
+                    <div class="purchase-actions">
+
+                      <button
+                        class="icon-btn"
+                        data-edit-purchase="${
+                          compra.id
+                        }"
+                        aria-label="Editar compra"
+                        title="Editar compra"
+                      >
+                        <span
+                          class="ico"
+                          data-ico="edit"
+                        ></span>
+                      </button>
+
+                      <button
+                        class="icon-btn danger"
+                        data-delete-purchase="${
+                          compra.id
+                        }"
+                        aria-label="Excluir compra"
+                        title="Excluir compra"
+                      >
+                        <span
+                          class="ico"
+                          data-ico="trash"
+                        ></span>
+                      </button>
+
+                    </div>
+                  `
+                  : ""
+              }
+
+            </div>
+
+          </div>
+        `,
+      )
+      .join("");
+
+  paintIcons(
+    lista,
+  );
+
+  conectarBotoesEditarCompra(
+    lista,
+  );
+
+  conectarBotoesExcluirCompra(
+    lista,
+  );
+}
+
+
+// ============================================================================
+// BOTÃO PRINCIPAL "ADICIONAR COMPRA"
+// ============================================================================
+
+const botaoAdicionarCompra =
+  elemento(
+    "btnAddCompra",
+  );
+
+if (botaoAdicionarCompra) {
+  botaoAdicionarCompra.addEventListener(
+    "click",
+    () => {
+      if (
+        !state.contaAtual
+      ) {
+        return;
+      }
+
+      abrirModalCompra(
+        state.contaAtual.id,
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// MODAL DE COMPRA
+// ============================================================================
+
+const modalCompra =
+  elemento(
+    "modalCompra",
+  );
+
+
+// ============================================================================
+// ABRIR MODAL PARA ADICIONAR OU EDITAR COMPRA
+// ============================================================================
+
+async function abrirModalCompra(
+  contaId,
+  compraId = null,
+) {
+  state.compraEditando =
+    null;
+
+  if (!contaId) {
+    mostrarToast(
+      "Conta inválida.",
+      "close",
+    );
+
+    return;
+  }
+
+  const campoDescricao =
+    elemento(
+      "compraDesc",
+    );
+
+  const campoValor =
+    elemento(
+      "compraValor",
+    );
+
+  const campoObservacao =
+    elemento(
+      "compraObs",
+    );
+
+  const tituloModal =
+    document.querySelector(
+      "#modalCompra .modal-head h3",
+    );
+
+  if (compraId) {
+    try {
+      const resultado =
+        await api(
+          `/compras/${compraId}`,
+        );
+
+      const compra =
+        resultado.dados.compra;
+
+      state.compraEditando =
+        compra;
+
+      if (campoDescricao) {
+        campoDescricao.value =
+          compra.descricao || "";
+      }
+
+      if (campoValor) {
+        campoValor.value =
+          converterNumero(
+            compra.valor,
+          )
+            .toFixed(2)
+            .replace(".", ",");
+      }
+
+      if (campoObservacao) {
+        campoObservacao.value =
+          compra.observacao || "";
+      }
+
+      if (tituloModal) {
+        tituloModal.textContent =
+          "Editar compra";
+      }
+    } catch (erro) {
+      mostrarToast(
+        erro.message ||
+          "Não foi possível carregar a compra.",
+        "close",
+      );
+
+      return;
+    }
+  } else {
+    if (campoDescricao) {
+      campoDescricao.value =
+        "";
+    }
+
+    if (campoValor) {
+      campoValor.value =
+        "";
+    }
+
+    if (campoObservacao) {
+      campoObservacao.value =
+        "";
+    }
+
+    if (tituloModal) {
+      tituloModal.textContent =
+        "Adicionar compra";
+    }
+  }
+
+  modalCompra.dataset.contaId =
+    String(contaId);
+
+  abrirModal(
+    modalCompra,
+  );
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES DE EDITAR COMPRA
+// ============================================================================
+
+function conectarBotoesEditarCompra(
+  raiz,
+) {
+  elementos(
+    "[data-edit-purchase]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        () => {
+          if (
+            !state.contaAtual
+          ) {
+            return;
+          }
+
+          abrirModalCompra(
+            state.contaAtual.id,
+            botao.dataset
+              .editPurchase,
+          );
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES DE EXCLUIR COMPRA
+// ============================================================================
+
+function conectarBotoesExcluirCompra(
+  raiz,
+) {
+  elementos(
+    "[data-delete-purchase]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        () => {
+          excluirCompra(
+            botao.dataset
+              .deletePurchase,
+          );
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// SALVAR COMPRA
+// ============================================================================
+
+const botaoSalvarCompra =
+  elemento(
+    "btnSalvarCompra",
+  );
+
+if (botaoSalvarCompra) {
+  botaoSalvarCompra.addEventListener(
+    "click",
+    async () => {
+      const descricao =
+        elemento(
+          "compraDesc",
+        )?.value.trim();
+
+      const valor =
+        converterValorInput(
+          elemento(
+            "compraValor",
+          )?.value,
+        );
+
+      const observacao =
+        elemento(
+          "compraObs",
+        )?.value.trim() || "";
+
+      if (!descricao) {
+        mostrarToast(
+          "Informe o produto ou a descrição.",
+          "close",
+        );
+
+        return;
+      }
+
+      if (
+        !Number.isFinite(valor) ||
+        valor <= 0
+      ) {
+        mostrarToast(
+          "Informe um valor válido.",
+          "close",
+        );
+
+        return;
+      }
+
+      definirCarregamentoBotao(
+        botaoSalvarCompra,
+        true,
+        "Salvando...",
+      );
+
+      try {
+        if (
+          state.compraEditando
+        ) {
+          await api(
+            `/compras/${
+              state.compraEditando.id
+            }`,
+            {
+              method:
+                "PATCH",
+
+              body:
+                JSON.stringify({
+                  descricao,
+                  valor,
+                  observacao,
+                }),
+            },
+          );
+
+          mostrarToast(
+            "Compra atualizada com sucesso.",
+          );
+        } else {
+          await api(
+            `/contas/${
+              modalCompra.dataset
+                .contaId
+            }/compras`,
+            {
+              method:
+                "POST",
+
+              body:
+                JSON.stringify({
+                  descricao,
+                  valor,
+                  observacao,
+                }),
+            },
+          );
+
+          mostrarToast(
+            "Compra registrada com sucesso.",
+          );
+        }
+
+        fecharModal(
+          modalCompra,
+        );
+
+        await abrirDetalhesConta(
+          modalCompra.dataset
+            .contaId,
+        );
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível salvar a compra.",
+          "close",
+        );
+      } finally {
+        definirCarregamentoBotao(
+          botaoSalvarCompra,
+          false,
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// MÁSCARA DO CAMPO VALOR
+// ============================================================================
+
+const campoValorCompra =
+  elemento(
+    "compraValor",
+  );
+
+if (campoValorCompra) {
+  campoValorCompra.addEventListener(
+    "input",
+    (evento) => {
+      let numeros =
+        evento.target.value.replace(
+          /\D/g,
+          "",
+        );
+
+      if (!numeros) {
+        evento.target.value =
+          "";
+
+        return;
+      }
+
+      const valor =
+        Number(numeros) /
+        100;
+
+      evento.target.value =
+        valor.toLocaleString(
+          "pt-BR",
+          {
+            minimumFractionDigits:
+              2,
+
+            maximumFractionDigits:
+              2,
+          },
+        );
+    },
+  );
+}
+
+
+// ============================================================================
+// EXCLUIR COMPRA
+// ============================================================================
+
+async function excluirCompra(
+  compraId,
+) {
+  const confirmou =
+    window.confirm(
+      "Deseja realmente excluir esta compra?",
+    );
+
+  if (!confirmou) {
+    return;
+  }
+
+  try {
+    await api(
+      `/compras/${compraId}`,
+      {
+        method:
+          "DELETE",
+      },
+    );
+
+    mostrarToast(
+      "Compra excluída.",
+      "trash",
+    );
+
+    if (
+      state.contaAtual
+    ) {
+      await abrirDetalhesConta(
+        state.contaAtual.id,
+      );
+    }
+  } catch (erro) {
+    mostrarToast(
+      erro.message ||
+        "Não foi possível excluir a compra.",
+      "close",
+    );
+  }
+}
+
+// ============================================================================
+// PARTE 6
+// CLIENTES E ABERTURA DE NOVA CONTA
+// ============================================================================
+
+
+// ============================================================================
+// MODAL DE NOVA CONTA
+// ============================================================================
+
+const modalNovaConta =
+  elemento(
+    "modalNovaConta",
+  );
+
+
+// ============================================================================
+// ABRIR MODAL DE NOVA CONTA
+// ============================================================================
+
+function abrirModalNovaConta() {
+  state.clienteSelecionado =
+    null;
+
+  state.contaPendenteSelecionada =
+    null;
+
+  const camposParaLimpar = [
+    "searchClientModal",
+    "newClientNome",
+    "newClientApelido",
+    "newClientTelefone",
+    "newClientObs",
+  ];
+
+  camposParaLimpar.forEach(
+    (idCampo) => {
+      const campo =
+        elemento(
+          idCampo,
+        );
+
+      if (campo) {
+        campo.value =
+          "";
+      }
+    },
+  );
+
+  definirOculto(
+    "clientHasOpenWarning",
+    true,
+  );
+
+  const resultados =
+    elemento(
+      "clientResults",
+    );
+
+  if (resultados) {
+    resultados.innerHTML =
+      "";
+  }
+
+  abrirModal(
+    modalNovaConta,
+  );
+}
+
+
+// ============================================================================
+// BOTÕES PARA ABRIR NOVA CONTA
+// ============================================================================
+
+const botaoNovaContaTopo =
+  elemento(
+    "btnNovaContaTop",
+  );
+
+const botaoNovaContaPagina =
+  elemento(
+    "btnNovaContaContas",
+  );
+
+if (botaoNovaContaTopo) {
+  botaoNovaContaTopo.addEventListener(
+    "click",
+    abrirModalNovaConta,
+  );
+}
+
+if (botaoNovaContaPagina) {
+  botaoNovaContaPagina.addEventListener(
+    "click",
+    abrirModalNovaConta,
+  );
+}
+
+
+// ============================================================================
+// PESQUISAR CLIENTES NO MODAL
+// ============================================================================
+
+const campoPesquisaCliente =
+  elemento(
+    "searchClientModal",
+  );
+
+if (campoPesquisaCliente) {
+  campoPesquisaCliente.addEventListener(
+    "input",
+    debounce(
+      async (evento) => {
+        const pesquisa =
+          evento.target.value.trim();
+
+        const listaResultados =
+          elemento(
+            "clientResults",
+          );
+
+        if (!listaResultados) {
+          return;
+        }
+
+        if (!pesquisa) {
+          listaResultados.innerHTML =
+            "";
+
+          return;
+        }
+
+        try {
+          const parametros =
+            new URLSearchParams({
+              pesquisa,
+              limite:
+                8,
+            });
+
+          const resultado =
+            await api(
+              `/clientes?${parametros.toString()}`,
+            );
+
+          const clientes =
+            resultado.dados || [];
+
+          renderizarResultadosClientes(
+            clientes,
+          );
+        } catch (erro) {
+          listaResultados.innerHTML = `
+            <p
+              class="muted"
+              style="padding:8px 2px;"
+            >
+              ${escaparHtml(
+                erro.message ||
+                  "Não foi possível pesquisar os clientes.",
+              )}
+            </p>
+          `;
+        }
+      },
+      350,
+    ),
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR RESULTADOS DE CLIENTES
+// ============================================================================
+
+function renderizarResultadosClientes(
+  clientes,
+) {
+  const listaResultados =
+    elemento(
+      "clientResults",
+    );
+
+  if (!listaResultados) {
+    return;
+  }
+
+  if (
+    clientes.length === 0
+  ) {
+    listaResultados.innerHTML = `
+      <p
+        class="muted"
+        style="padding:8px 2px;"
+      >
+        Nenhum cliente encontrado.
+        Cadastre abaixo.
+      </p>
+    `;
+
+    return;
+  }
+
+  listaResultados.innerHTML =
+    clientes
+      .map(
+        (cliente) => `
+          <div class="client-row">
+
+            <div>
+
+              <div class="cr-name">
+                ${escaparHtml(
+                  cliente.nome,
+                )}
+              </div>
+
+              <div class="cr-phone">
+                ${escaparHtml(
+                  cliente.telefone ||
+                    "Sem telefone",
+                )}
+              </div>
+
+            </div>
+
+            <button
+              class="btn btn-primary"
+              data-pick-client="${
+                cliente.id
+              }"
+            >
+              Selecionar
+            </button>
+
+          </div>
+        `,
+      )
+      .join("");
+
+  conectarBotoesSelecionarCliente(
+    listaResultados,
+  );
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES DE SELEÇÃO DE CLIENTE
+// ============================================================================
+
+function conectarBotoesSelecionarCliente(
+  raiz,
+) {
+  elementos(
+    "[data-pick-client]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        async () => {
+          const clienteId =
+            botao.dataset.pickClient;
+
+          try {
+            await selecionarClienteParaConta(
+              clienteId,
+            );
+          } catch (erro) {
+            mostrarToast(
+              erro.message ||
+                "Não foi possível selecionar o cliente.",
+              "close",
+            );
+          }
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// VERIFICAR SE CLIENTE PODE ABRIR CONTA
+// ============================================================================
+
+async function selecionarClienteParaConta(
+  clienteId,
+) {
+  const resultado =
+    await api(
+      `/clientes/${clienteId}/pode-abrir-conta`,
+    );
+
+  const dados =
+    resultado.dados;
+
+  state.clienteSelecionado =
+    dados.cliente;
+
+  if (
+    !dados.pode_abrir_conta
+  ) {
+    state.contaPendenteSelecionada =
+      dados.conta_pendente;
+
+    const textoAviso =
+      dados.conta_pendente?.status ===
+      "FECHADA"
+        ? "Este cliente possui uma conta fechada aguardando pagamento. É necessário concluir o pagamento antes de abrir uma nova conta."
+        : "Este cliente já possui uma conta em aberto.";
+
+    definirTexto(
+      "clientHasOpenWarningText",
+      textoAviso,
+    );
+
+    definirOculto(
+      "clientHasOpenWarning",
+      false,
+    );
+
+    return;
+  }
+
+  await criarNovaConta(
+    clienteId,
+  );
+}
+
+
+// ============================================================================
+// ACESSAR CONTA PENDENTE EXISTENTE
+// ============================================================================
+
+const botaoAcessarContaAtual =
+  elemento(
+    "btnAcessarContaAtual",
+  );
+
+if (botaoAcessarContaAtual) {
+  botaoAcessarContaAtual.addEventListener(
+    "click",
+    async () => {
+      const contaId =
+        state.contaPendenteSelecionada?.id;
+
+      if (!contaId) {
+        mostrarToast(
+          "A conta atual não foi encontrada.",
+          "close",
+        );
+
+        return;
+      }
+
+      fecharModal(
+        modalNovaConta,
+      );
+
+      try {
+        await abrirDetalhesConta(
+          contaId,
+        );
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível abrir a conta atual.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// CADASTRAR CLIENTE E ABRIR CONTA
+// ============================================================================
+
+const botaoCadastrarEAbrir =
+  elemento(
+    "btnCadastrarEAbrir",
+  );
+
+if (botaoCadastrarEAbrir) {
+  botaoCadastrarEAbrir.addEventListener(
+    "click",
+    async () => {
+      const nome =
+        elemento(
+          "newClientNome",
+        )?.value.trim();
+
+      const apelido =
+        elemento(
+          "newClientApelido",
+        )?.value.trim() || "";
+
+      const telefone =
+        elemento(
+          "newClientTelefone",
+        )?.value.trim() || "";
+
+      const observacao =
+        elemento(
+          "newClientObs",
+        )?.value.trim() || "";
+
+      if (!nome) {
+        mostrarToast(
+          "Informe o nome do cliente.",
+          "close",
+        );
+
+        return;
+      }
+
+      definirCarregamentoBotao(
+        botaoCadastrarEAbrir,
+        true,
+        "Cadastrando...",
+      );
+
+      try {
+        const resultadoCliente =
+          await api(
+            "/clientes",
+            {
+              method:
+                "POST",
+
+              body:
+                JSON.stringify({
+                  nome,
+                  apelido,
+                  telefone,
+                  observacao,
+                }),
+            },
+          );
+
+        const novoCliente =
+          resultadoCliente.dados.cliente;
+
+        await criarNovaConta(
+          novoCliente.id,
+        );
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível cadastrar o cliente.",
+          "close",
+        );
+      } finally {
+        definirCarregamentoBotao(
+          botaoCadastrarEAbrir,
+          false,
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// CRIAR NOVA CONTA
+// ============================================================================
+
+async function criarNovaConta(
+  clienteId,
+) {
+  const resultado =
+    await api(
+      "/contas",
+      {
+        method:
+          "POST",
+
+        body:
+          JSON.stringify({
+            cliente_id:
+              Number(clienteId),
+
+            observacao:
+              "",
+          }),
+      },
+    );
+
+  const novaConta =
+    resultado.dados.conta;
+
+  fecharModal(
+    modalNovaConta,
+  );
+
+  mostrarToast(
+    "Conta criada com sucesso.",
+  );
+
+  if (
+    typeof carregarContas ===
+    "function"
+  ) {
+    await carregarContas();
+  }
+
+  await abrirDetalhesConta(
+    novaConta.id,
+  );
+}
+
+// ============================================================================
+// PARTE 7
+// CONCLUSÃO DE PAGAMENTO
+// ============================================================================
+
+
+// ============================================================================
+// MODAL DE PAGAMENTO
+// ============================================================================
+
+const modalPagamento =
+  elemento(
+    "modalPagamento",
+  );
+
+
+// ============================================================================
+// ABRIR MODAL DE PAGAMENTO
+// ============================================================================
+
+function abrirModalPagamento(
+  conta,
+) {
+  if (!conta) {
+    mostrarToast(
+      "Conta inválida.",
+      "close",
+    );
+
+    return;
+  }
+
+  if (
+    converterNumero(
+      conta.total_conta,
+    ) <= 0
+  ) {
+    mostrarToast(
+      "Não é possível concluir uma conta sem compras.",
+      "close",
+    );
+
+    return;
+  }
+
+  state.formaPagamento =
+    "DINHEIRO";
+
+  const resumo =
+    elemento(
+      "paySummary",
+    );
+
+  if (resumo) {
+    resumo.innerHTML = `
+      <div class="ps-row">
+
+        <span>
+          Cliente
+        </span>
+
+        <strong>
+          ${escaparHtml(
+            conta.cliente_nome,
+          )}
+        </strong>
+
+      </div>
+
+      <div class="ps-row">
+
+        <span>
+          Aberta em
+        </span>
+
+        <span>
+          ${formatarData(
+            conta.data_abertura,
+          )}
+        </span>
+
+      </div>
+
+      <div class="ps-row">
+
+        <span>
+          Registros
+        </span>
+
+        <span>
+          ${
+            conta.quantidade_registros ??
+            0
+          }
+        </span>
+
+      </div>
+
+      <div class="ps-row ps-total">
+
+        <span>
+          Total
+        </span>
+
+        <strong>
+          ${formatarMoeda(
+            conta.total_conta,
+          )}
+        </strong>
+
+      </div>
+    `;
+  }
+
+  elementos(
+    "#payMethods .method-btn",
+  ).forEach(
+    (botao) => {
+      botao.classList.toggle(
+        "is-active",
+        botao.dataset.method ===
+          "DINHEIRO",
+      );
+    },
+  );
+
+  const campoObservacao =
+    elemento(
+      "pagamentoObs",
+    );
+
+  if (campoObservacao) {
+    campoObservacao.value =
+      "";
+  }
+
+  abrirModal(
+    modalPagamento,
+  );
+}
+
+
+// ============================================================================
+// BOTÃO "CONCLUIR PAGAMENTO"
+// ============================================================================
+
+const botaoConcluirPagamento =
+  elemento(
+    "btnConcluirPagamento",
+  );
+
+if (botaoConcluirPagamento) {
+  botaoConcluirPagamento.addEventListener(
+    "click",
+    () => {
+      if (
+        !state.contaAtual
+      ) {
+        mostrarToast(
+          "Nenhuma conta foi selecionada.",
+          "close",
+        );
+
+        return;
+      }
+
+      abrirModalPagamento(
+        state.contaAtual,
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// SELECIONAR FORMA DE PAGAMENTO
+// ============================================================================
+
+elementos(
+  "#payMethods .method-btn",
+).forEach(
+  (botao) => {
+    botao.addEventListener(
+      "click",
+      () => {
+        const forma =
+          botao.dataset.method;
+
+        if (
+          ![
+            "DINHEIRO",
+            "PIX",
+            "CARTAO",
+          ].includes(forma)
+        ) {
+          mostrarToast(
+            "Forma de pagamento inválida.",
+            "close",
+          );
+
+          return;
+        }
+
+        state.formaPagamento =
+          forma;
+
+        elementos(
+          "#payMethods .method-btn",
+        ).forEach(
+          (item) => {
+            item.classList.toggle(
+              "is-active",
+              item === botao,
+            );
+          },
+        );
+      },
+    );
+  },
+);
+
+
+// ============================================================================
+// CONFIRMAR PAGAMENTO
+// ============================================================================
+
+const botaoConfirmarPagamento =
+  elemento(
+    "btnConfirmarPagamento",
+  );
+
+if (botaoConfirmarPagamento) {
+  botaoConfirmarPagamento.addEventListener(
+    "click",
+    async () => {
+      if (
+        !state.contaAtual?.id
+      ) {
+        mostrarToast(
+          "Nenhuma conta foi selecionada.",
+          "close",
+        );
+
+        return;
+      }
+
+      const observacao =
+        elemento(
+          "pagamentoObs",
+        )?.value.trim() || "";
+
+      definirCarregamentoBotao(
+        botaoConfirmarPagamento,
+        true,
+        "Concluindo...",
+      );
+
+      try {
+        await api(
+          `/contas/${
+            state.contaAtual.id
+          }/pagamento`,
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                forma:
+                  state.formaPagamento,
+
+                observacao,
+              }),
+          },
+        );
+
+        fecharModal(
+          modalPagamento,
+        );
+
+        mostrarToast(
+          "Pagamento concluído com sucesso.",
+        );
+
+        state.contaAtual =
+          null;
+
+        if (
+          typeof carregarDashboard ===
+          "function"
+        ) {
+          await carregarDashboard();
+        }
+
+        if (
+          typeof carregarContas ===
+          "function"
+        ) {
+          await carregarContas();
+        }
+
+        await irParaPagina(
+          "contas",
+        );
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível concluir o pagamento.",
+          "close",
+        );
+      } finally {
+        definirCarregamentoBotao(
+          botaoConfirmarPagamento,
+          false,
+        );
+      }
+    },
+  );
+}
+
+// ============================================================================
+// PARTE 8
+// HISTÓRICO E DETALHES DAS CONTAS PAGAS
+// ============================================================================
+
+
+// ============================================================================
+// CARREGAR HISTÓRICO
+// ============================================================================
+
+async function carregarHistorico() {
+  const parametros =
+    new URLSearchParams({
+      pesquisa:
+        state.historico.pesquisa,
+
+      pagina:
+        state.historico.pagina,
+
+      limite:
+        state.historico.limite,
+    });
+
+  const resultado =
+    await api(
+      `/historico?${parametros.toString()}`,
+    );
+
+  const historico =
+    resultado.dados || [];
+
+  renderizarHistorico(
+    historico,
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR HISTÓRICO
+// ============================================================================
+
+function renderizarHistorico(
+  historico,
+) {
+  definirOculto(
+    "historicoEmpty",
+    historico.length > 0,
+  );
+
+  const corpoTabela =
+    elemento(
+      "tableHistoricoBody",
+    );
+
+  const listaMobile =
+    elemento(
+      "cardsHistoricoMobile",
+    );
+
+  if (corpoTabela) {
+    corpoTabela.innerHTML =
+      historico
+        .map(
+          (registro) =>
+            criarLinhaHistorico(
+              registro,
+            ),
+        )
+        .join("");
+  }
+
+  if (listaMobile) {
+    listaMobile.innerHTML =
+      historico
+        .map(
+          (registro) =>
+            criarCardHistorico(
+              registro,
+            ),
+        )
+        .join("");
+  }
+
+  [
+    corpoTabela,
+    listaMobile,
+  ]
+    .filter(Boolean)
+    .forEach(
+      (raiz) => {
+        conectarBotoesHistorico(
+          raiz,
+        );
+      },
+    );
+}
+
+
+// ============================================================================
+// CRIAR LINHA DO HISTÓRICO
+// ============================================================================
+
+function criarLinhaHistorico(
+  registro,
+) {
+  return `
+    <tr>
+
+      <td>
+        <strong>
+          ${escaparHtml(
+            registro.cliente_nome,
+          )}
+        </strong>
+      </td>
+
+      <td>
+        ${formatarMoeda(
+          registro.valor_pago,
+        )}
+      </td>
+
+      <td>
+        ${formatarData(
+          registro.data_pagamento,
+        )}
+        às
+        ${formatarHora(
+          registro.data_pagamento,
+        )}
+      </td>
+
+      <td>
+        ${escaparHtml(
+          formatarFormaPagamento(
+            registro.forma,
+          ),
+        )}
+      </td>
+
+      <td>
+
+        <div class="row-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-open-hist="${
+              registro.conta_id
+            }"
+          >
+            Ver detalhes
+          </button>
+
+        </div>
+
+      </td>
+
+    </tr>
+  `;
+}
+
+
+// ============================================================================
+// CRIAR CARD MOBILE DO HISTÓRICO
+// ============================================================================
+
+function criarCardHistorico(
+  registro,
+) {
+  return `
+    <div class="item-card">
+
+      <div class="item-card-top">
+
+        <strong>
+          ${escaparHtml(
+            registro.cliente_nome,
+          )}
+        </strong>
+
+        <span class="value">
+          ${formatarMoeda(
+            registro.valor_pago,
+          )}
+        </span>
+
+      </div>
+
+      <p>
+        ${formatarDataHora(
+          registro.data_pagamento,
+        )}
+        ·
+        ${escaparHtml(
+          formatarFormaPagamento(
+            registro.forma,
+          ),
+        )}
+      </p>
+
+      <div class="item-actions">
+
+        <button
+          class="btn btn-secondary"
+          data-open-hist="${
+            registro.conta_id
+          }"
+        >
+          Ver detalhes
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
+
+// ============================================================================
+// CONECTAR BOTÕES "VER DETALHES"
+// ============================================================================
+
+function conectarBotoesHistorico(
+  raiz,
+) {
+  elementos(
+    "[data-open-hist]",
+    raiz,
+  ).forEach(
+    (botao) => {
+      botao.addEventListener(
+        "click",
+        async () => {
+          const contaId =
+            botao.dataset.openHist;
+
+          try {
+            await abrirDetalhesHistorico(
+              contaId,
+            );
+          } catch (erro) {
+            mostrarToast(
+              erro.message ||
+                "Não foi possível abrir o histórico.",
+              "close",
+            );
+          }
+        },
+      );
+    },
+  );
+}
+
+
+// ============================================================================
+// PESQUISAR HISTÓRICO
+// ============================================================================
+
+const campoPesquisaHistorico =
+  elemento(
+    "searchHistorico",
+  );
+
+if (campoPesquisaHistorico) {
+  campoPesquisaHistorico.addEventListener(
+    "input",
+    debounce(
+      async (evento) => {
+        state.historico.pesquisa =
+          evento.target.value.trim();
+
+        state.historico.pagina =
+          1;
+
+        try {
+          await carregarHistorico();
+        } catch (erro) {
+          mostrarToast(
+            erro.message ||
+              "Não foi possível pesquisar o histórico.",
+            "close",
+          );
+        }
+      },
+      350,
+    ),
+  );
+}
+
+
+// ============================================================================
+// ABRIR DETALHES DO HISTÓRICO
+// ============================================================================
+
+async function abrirDetalhesHistorico(
+  contaId,
+) {
+  const resultado =
+    await api(
+      `/historico/${contaId}`,
+    );
+
+  const dados =
+    resultado.dados;
+
+  state.historicoAtual =
+    dados;
+
+  const conta =
+    dados.conta;
+
+  const compras =
+    dados.compras || [];
+
+  const pagamento =
+    dados.pagamento;
+
+  definirTexto(
+    "hdNome",
+    conta.cliente_nome,
+  );
+
+  definirTexto(
+    "hdMeta",
+    `Conta nº ${conta.id} · ` +
+      `Aberta em ${formatarData(
+        conta.data_abertura,
+      )} · ` +
+      `Concluída em ${formatarDataHora(
+        pagamento.data_pagamento,
+      )} · ` +
+      `${formatarFormaPagamento(
+        pagamento.forma,
+      )}`,
+  );
+
+  renderizarComprasHistorico(
+    compras,
+    pagamento,
+  );
+
+  definirDesabilitado(
+    "btnNovaContaCliente",
+    !dados.pode_abrir_nova_conta,
+    dados.pode_abrir_nova_conta
+      ? ""
+      : "Este cliente já possui uma conta pendente.",
+  );
+
+  configurarAcoesHistorico(
+    conta,
+    dados,
+  );
+
+  await irParaPagina(
+    "historico-detalhe",
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR COMPRAS DO HISTÓRICO
+// ============================================================================
+
+function renderizarComprasHistorico(
+  compras,
+  pagamento,
+) {
+  const lista =
+    elemento(
+      "hdPurchasesList",
+    );
+
+  if (!lista) {
+    return;
+  }
+
+  const comprasOrdenadas =
+    [...compras].sort(
+      (compraA, compraB) =>
+        new Date(
+          compraB.data_compra,
+        ) -
+        new Date(
+          compraA.data_compra,
+        ),
+    );
+
+  lista.innerHTML =
+    comprasOrdenadas
+      .map(
+        (compra) => `
+          <div class="purchase-item">
+
+            <div>
+
+              <strong>
+                ${escaparHtml(
+                  compra.descricao,
+                )}
+              </strong>
+
+              <div class="p-meta">
+                ${formatarData(
+                  compra.data_compra,
+                )}
+                às
+                ${formatarHora(
+                  compra.data_compra,
+                )}
+              </div>
+
+              ${
+                compra.observacao
+                  ? `
+                    <div class="p-obs">
+                      ${escaparHtml(
+                        compra.observacao,
+                      )}
+                    </div>
+                  `
+                  : ""
+              }
+
+            </div>
+
+            <span class="purchase-value">
+              ${formatarMoeda(
+                compra.valor,
+              )}
+            </span>
+
+          </div>
+        `,
+      )
+      .join("") +
+    `
+      <div
+        class="purchase-item"
+        style="
+          background:var(--ivory-2);
+        "
+      >
+
+        <strong>
+          Total pago
+        </strong>
+
+        <span class="purchase-value">
+          ${formatarMoeda(
+            pagamento.valor_pago,
+          )}
+        </span>
+
+      </div>
+    `;
+}
+
+
+// ============================================================================
+// CONFIGURAR AÇÕES DO HISTÓRICO
+// ============================================================================
+
+function configurarAcoesHistorico(
+  conta,
+  dados,
+) {
+  const botaoPdf =
+    elemento(
+      "btnExportarPDF",
+    );
+
+  const botaoImprimir =
+    elemento(
+      "btnImprimir",
+    );
+
+  const botaoCompartilhar =
+    elemento(
+      "btnCompartilhar",
+    );
+
+  const botaoNovaContaCliente =
+    elemento(
+      "btnNovaContaCliente",
+    );
+
+  if (botaoPdf) {
+    botaoPdf.onclick =
+      () => {
+        baixarPdfConta(
+          conta.id,
+        );
+      };
+  }
+
+  if (botaoImprimir) {
+    botaoImprimir.onclick =
+      () => {
+        visualizarPdfConta(
+          conta.id,
+        );
+      };
+  }
+
+  if (botaoCompartilhar) {
+    botaoCompartilhar.onclick =
+      () => {
+        compartilharPdfConta(
+          conta.id,
+        );
+      };
+  }
+
+  if (botaoNovaContaCliente) {
+    botaoNovaContaCliente.onclick =
+      async () => {
+        if (
+          !dados.pode_abrir_nova_conta
+        ) {
+          mostrarToast(
+            "Este cliente já possui uma conta pendente.",
+            "close",
+          );
+
+          return;
+        }
+
+        try {
+          await criarNovaConta(
+            conta.cliente_id,
+          );
+        } catch (erro) {
+          mostrarToast(
+            erro.message ||
+              "Não foi possível abrir uma nova conta.",
+            "close",
+          );
+        }
+      };
+  }
+}
+
+
+// ============================================================================
+// BAIXAR PDF
+// ============================================================================
+
+async function baixarPdfConta(
+  contaId,
+) {
+  try {
+    const resposta =
+      await api(
+        `/historico/${contaId}/pdf`,
+      );
+
+    const arquivo =
+      await resposta.blob();
+
+    const url =
+      URL.createObjectURL(
+        arquivo,
+      );
+
+    const link =
+      document.createElement(
+        "a",
+      );
+
+    link.href =
+      url;
+
+    link.download =
+      `comprovante_conta_${contaId}.pdf`;
+
+    document.body.appendChild(
+      link,
+    );
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(
+      url,
+    );
+
+    mostrarToast(
+      "PDF baixado com sucesso.",
+      "file",
+    );
+  } catch (erro) {
+    mostrarToast(
+      erro.message ||
+        "Não foi possível baixar o PDF.",
+      "close",
+    );
+  }
+}
+
+
+// ============================================================================
+// VISUALIZAR PDF
+// ============================================================================
+
+async function visualizarPdfConta(
+  contaId,
+) {
+  try {
+    const resposta =
+      await api(
+        `/historico/${contaId}/pdf/visualizar`,
+      );
+
+    const arquivo =
+      await resposta.blob();
+
+    const url =
+      URL.createObjectURL(
+        arquivo,
+      );
+
+    const novaAba =
+      window.open(
+        url,
+        "_blank",
+        "noopener,noreferrer",
+      );
+
+    if (!novaAba) {
+      mostrarToast(
+        "O navegador bloqueou a nova aba.",
+        "close",
+      );
+    }
+
+    setTimeout(
+      () => {
+        URL.revokeObjectURL(
+          url,
+        );
+      },
+      60000,
+    );
+  } catch (erro) {
+    mostrarToast(
+      erro.message ||
+        "Não foi possível visualizar o PDF.",
+      "close",
+    );
+  }
+}
+
+
+// ============================================================================
+// COMPARTILHAR PDF
+// ============================================================================
+
+async function compartilharPdfConta(
+  contaId,
+) {
+  try {
+    const resposta =
+      await api(
+        `/historico/${contaId}/pdf`,
+      );
+
+    const arquivoBlob =
+      await resposta.blob();
+
+    const arquivo =
+      new File(
+        [
+          arquivoBlob,
+        ],
+        `comprovante_conta_${contaId}.pdf`,
+        {
+          type:
+            "application/pdf",
+        },
+      );
+
+    const podeCompartilhar =
+      navigator.canShare &&
+      navigator.canShare({
+        files: [
+          arquivo,
+        ],
+      });
+
+    if (podeCompartilhar) {
+      await navigator.share({
+        title:
+          "Comprovante da conta",
+
+        text:
+          "Comprovante gerado pela Caderneta Digital.",
+
+        files: [
+          arquivo,
+        ],
+      });
+
+      return;
+    }
+
+    await baixarPdfConta(
+      contaId,
+    );
+
+    mostrarToast(
+      "O PDF foi baixado para você compartilhar.",
+      "share",
+    );
+  } catch (erro) {
+    if (
+      erro.name ===
+      "AbortError"
+    ) {
+      return;
+    }
+
+    mostrarToast(
+      erro.message ||
+        "Não foi possível compartilhar o PDF.",
+      "close",
+    );
+  }
+}
+
+// ============================================================================
+// PARTE 9
+// RELATÓRIOS, GRÁFICO DE PAGAMENTOS E RANKING DE CLIENTES
+// ============================================================================
+
+
+// ============================================================================
+// CONFIGURAR FILTROS DE RELATÓRIO
+// ============================================================================
+
+function configurarFiltrosRelatorio() {
+  const seletorMes =
+    elemento(
+      "selMes",
+    );
+
+  const seletorAno =
+    elemento(
+      "selAno",
+    );
+
+  if (
+    !seletorMes ||
+    !seletorAno
+  ) {
+    return;
+  }
+
+  const dataAtual =
+    new Date();
+
+  seletorMes.innerHTML =
+    MESES
+      .map(
+        (
+          nomeMes,
+          indice,
+        ) => `
+          <option value="${
+            indice + 1
+          }">
+
+            ${
+              nomeMes
+                .charAt(0)
+                .toUpperCase() +
+              nomeMes.slice(1)
+            }
+
+          </option>
+        `,
+      )
+      .join("");
+
+  const anos = [];
+
+  for (
+    let ano =
+      dataAtual.getFullYear();
+    ano >=
+      dataAtual.getFullYear() -
+        10;
+    ano -= 1
+  ) {
+    anos.push(ano);
+  }
+
+  seletorAno.innerHTML =
+    anos
+      .map(
+        (ano) => `
+          <option value="${ano}">
+            ${ano}
+          </option>
+        `,
+      )
+      .join("");
+
+  seletorMes.value =
+    String(
+      state.relatorios.mes,
+    );
+
+  seletorAno.value =
+    String(
+      state.relatorios.ano,
+    );
+
+  seletorMes.addEventListener(
+    "change",
+    async () => {
+      state.relatorios.mes =
+        Number(
+          seletorMes.value,
+        );
+
+      try {
+        await carregarRelatorios();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível carregar o relatório.",
+          "close",
+        );
+      }
+    },
+  );
+
+  seletorAno.addEventListener(
+    "change",
+    async () => {
+      state.relatorios.ano =
+        Number(
+          seletorAno.value,
+        );
+
+      try {
+        await carregarRelatorios();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível carregar o relatório.",
+          "close",
+        );
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// BOTÕES DOS FILTROS
+// ============================================================================
+
+elementos(
+  "#reportFilters .chip",
+).forEach(
+  (botao) => {
+    botao.addEventListener(
+      "click",
+      async () => {
+        elementos(
+          "#reportFilters .chip",
+        ).forEach(
+          (item) => {
+            item.classList.remove(
+              "is-active",
+            );
+          },
+        );
+
+        botao.classList.add(
+          "is-active",
+        );
+
+        state.relatorios.periodo =
+          botao.dataset.filter;
+
+        definirOculto(
+          "customFilter",
+          state.relatorios.periodo !==
+            "personalizado",
+        );
+
+        try {
+          await carregarRelatorios();
+        } catch (erro) {
+          mostrarToast(
+            erro.message ||
+              "Não foi possível carregar o relatório.",
+            "close",
+          );
+        }
+      },
+    );
+  },
+);
+
+
+// ============================================================================
+// CARREGAR RELATÓRIOS
+// ============================================================================
+
+async function carregarRelatorios() {
+  const parametros =
+    new URLSearchParams({
+      periodo:
+        state.relatorios.periodo,
+    });
+
+  if (
+    state.relatorios.periodo ===
+    "personalizado"
+  ) {
+    parametros.set(
+      "ano",
+      state.relatorios.ano,
+    );
+
+    parametros.set(
+      "mes",
+      state.relatorios.mes,
+    );
+  }
+
+  const resultado =
+    await api(
+      `/relatorios?${parametros.toString()}`,
+    );
+
+  const dados =
+    resultado.dados;
+
+  renderizarResumoRelatorios(
+    dados.resumo,
+  );
+
+  renderizarGraficoPagamentos(
+    dados.formas_pagamento || [],
+  );
+
+  renderizarRankingClientes(
+    dados.clientes_mais_compraram ||
+      [],
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR CARDS DOS RELATÓRIOS
+// ============================================================================
+
+function renderizarResumoRelatorios(
+  resumo,
+) {
+  definirTexto(
+    "repFaturamento",
+    formatarMoeda(
+      resumo.faturamento,
+    ),
+  );
+
+  definirTexto(
+    "repAReceber",
+    formatarMoeda(
+      resumo.total_a_receber,
+    ),
+  );
+
+  definirTexto(
+    "repQtdPagos",
+    resumo.pagamentos_concluidos ??
+      0,
+  );
+
+  const contasPendentes =
+    converterNumero(
+      resumo.contas_abertas,
+    ) +
+    converterNumero(
+      resumo.contas_fechadas,
+    );
+
+  definirTexto(
+    "repQtdAbertas",
+    contasPendentes,
+  );
+}
+
+
+// ============================================================================
+// RENDERIZAR GRÁFICO DE FORMAS DE PAGAMENTO
+// ============================================================================
+
+function renderizarGraficoPagamentos(
+  formasPagamento,
+) {
+  const grafico =
+    elemento(
+      "donutChart",
+    );
+
+  const legenda =
+    elemento(
+      "donutLegend",
+    );
+
+  if (
+    !grafico ||
+    !legenda
+  ) {
+    return;
+  }
+
+  const cores = {
+    DINHEIRO:
+      "#2E9B5C",
+
+    PIX:
+      "#3E7BC4",
+
+    CARTAO:
+      "#C68A4E",
+  };
+
+  const valorTotal =
+    formasPagamento.reduce(
+      (
+        total,
+        forma,
+      ) =>
+        total +
+        converterNumero(
+          forma.valor_total,
+        ),
+      0,
+    );
+
+  const raio =
+    50;
+
+  const centro =
+    60;
+
+  const circunferencia =
+    2 *
+    Math.PI *
+    raio;
+
+  let acumulado =
+    0;
+
+  const segmentos =
+    formasPagamento.map(
+      (forma) => {
+        const percentual =
+          valorTotal > 0
+            ? converterNumero(
+                forma.valor_total,
+              ) /
+              valorTotal
+            : 0;
+
+        const segmento = {
+          ...forma,
+
+          percentual,
+
+          inicio:
+            acumulado,
+        };
+
+        acumulado +=
+          percentual;
+
+        return segmento;
+      },
+    );
+
+  const circulos =
+    segmentos
+      .filter(
+        (segmento) =>
+          segmento.percentual >
+          0,
+      )
+      .map(
+        (segmento) => {
+          const tamanho =
+            circunferencia *
+            segmento.percentual;
+
+          const restante =
+            circunferencia -
+            tamanho;
+
+          const deslocamento =
+            -circunferencia *
+            segmento.inicio;
+
+          return `
+            <circle
+              cx="${centro}"
+              cy="${centro}"
+              r="${raio}"
+              fill="none"
+              stroke="${
+                cores[
+                  segmento.forma
+                ] ||
+                "#999999"
+              }"
+              stroke-width="14"
+              stroke-dasharray="
+                ${tamanho}
+                ${restante}
+              "
+              stroke-dashoffset="
+                ${deslocamento}
+              "
+              transform="
+                rotate(
+                  -90
+                  ${centro}
+                  ${centro}
+                )
+              "
+            />
+          `;
+        },
+      )
+      .join("");
+
+  grafico.innerHTML = `
+    <circle
+      cx="${centro}"
+      cy="${centro}"
+      r="${raio}"
+      fill="none"
+      stroke="var(--line)"
+      stroke-width="14"
+    />
+
+    ${circulos}
+
+    <text
+      x="${centro}"
+      y="${centro - 2}"
+      text-anchor="middle"
+      font-size="14"
+      font-weight="700"
+      fill="var(--ink)"
+    >
+      ${escaparHtml(
+        formatarMoeda(
+          valorTotal,
+        ),
+      )}
+    </text>
+
+    <text
+      x="${centro}"
+      y="${centro + 14}"
+      text-anchor="middle"
+      font-size="8.5"
+      fill="var(--ink-faint)"
+    >
+      recebido
+    </text>
+  `;
+
+  legenda.innerHTML =
+    formasPagamento
+      .map(
+        (forma) => `
+          <div class="legend-row">
+
+            <span
+              class="legend-dot"
+              style="
+                background:
+                ${
+                  cores[
+                    forma.forma
+                  ] ||
+                  "#999999"
+                };
+              "
+            ></span>
+
+            <span>
+
+              ${escaparHtml(
+                formatarFormaPagamento(
+                  forma.forma,
+                ),
+              )}
+
+              <span class="legend-sub">
+
+                (${
+                  forma.quantidade_pagamentos ??
+                  0
+                }
+                pagto.)
+
+              </span>
+
+            </span>
+
+            <strong>
+
+              ${formatarMoeda(
+                forma.valor_total,
+              )}
+
+            </strong>
+
+          </div>
+        `,
+      )
+      .join("");
+}
+
+
+// ============================================================================
+// RENDERIZAR RANKING DE CLIENTES
+// ============================================================================
+
+function renderizarRankingClientes(
+  clientes,
+) {
+  const lista =
+    elemento(
+      "rankingList",
+    );
+
+  if (!lista) {
+    return;
+  }
+
+  if (
+    clientes.length === 0
+  ) {
+    lista.innerHTML = `
+      <p class="muted">
+        Nenhum dado no período selecionado.
+      </p>
+    `;
+
+    return;
+  }
+
+  lista.innerHTML =
+    clientes
+      .map(
+        (cliente) => `
+          <div class="rank-row">
+
+            <span class="rank-pos">
+
+              ${
+                cliente.posicao
+              }
+
+            </span>
+
+            <div class="rank-name">
+
+              <strong>
+
+                ${escaparHtml(
+                  cliente.cliente_nome,
+                )}
+
+              </strong>
+
+              <small>
+
+                ${
+                  cliente.contas_pagas ??
+                  0
+                }
+                conta(s) concluída(s)
+
+              </small>
+
+            </div>
+
+            <span class="rank-value">
+
+              ${formatarMoeda(
+                cliente.total_comprado,
+              )}
+
+            </span>
+
+          </div>
+        `,
+      )
+      .join("");
+}
+
+// ============================================================================
+// PARTE 10
+// CONFIGURAÇÕES DA LOJA, PERFIL E INICIALIZAÇÃO FINAL
+// ============================================================================
+
+
+// ============================================================================
+// CARREGAR CONFIGURAÇÕES DA LOJA
+// ============================================================================
+
+async function carregarConfiguracoes() {
+  const resultado =
+    await api(
+      "/configuracoes",
+    );
+
+  const configuracoes =
+    resultado.dados.configuracoes;
+
+  atualizarConfiguracoesNaTela(
+    configuracoes,
+  );
+}
+
+
+// ============================================================================
+// MOSTRAR CONFIGURAÇÕES NA INTERFACE
+// ============================================================================
+
+function atualizarConfiguracoesNaTela(
+  configuracoes,
+) {
+  const nomeLoja =
+    configuracoes.nome_fantasia ||
+    configuracoes.nome_loja ||
+    "Nogueira";
+
+  const campoNomeLoja =
+    elemento(
+      "configNomeLoja",
+    );
+
+  if (campoNomeLoja) {
+    campoNomeLoja.value =
+      nomeLoja;
+  }
+
+  elementos(
+    ".brand-text strong",
+  ).forEach(
+    (elementoHtml) => {
+      elementoHtml.textContent =
+        nomeLoja;
+    },
+  );
+
+  /*
+    O nome exibido no rodapé lateral representa a loja,
+    não necessariamente o nome do usuário conectado.
+  */
+
+  elementos(
+    ".mini-profile strong",
+  ).forEach(
+    (elementoHtml) => {
+      elementoHtml.textContent =
+        nomeLoja;
+    },
+  );
+
+  const seletorTema =
+    elemento(
+      "darkModeToggle",
+    );
+
+  if (seletorTema) {
+    seletorTema.checked =
+      document.documentElement
+        .getAttribute(
+          "data-theme",
+        ) === "dark";
+  }
+}
+
+
+// ============================================================================
+// ALTERAR NOME DA LOJA
+//
+// Essa ação é permitida somente para administrador.
+// ============================================================================
+
+const campoNomeLoja =
+  elemento(
+    "configNomeLoja",
+  );
+
+if (campoNomeLoja) {
+  campoNomeLoja.addEventListener(
+    "change",
+    async (evento) => {
+      const novoNome =
+        evento.target.value.trim();
+
+      if (!novoNome) {
+        mostrarToast(
+          "Informe o nome da loja.",
+          "close",
+        );
+
+        return;
+      }
+
+      if (
+        state.usuario?.perfil !==
+        "ADMINISTRADOR"
+      ) {
+        mostrarToast(
+          "Somente administradores podem alterar as configurações.",
+          "close",
+        );
+
+        await carregarConfiguracoes();
+
+        return;
+      }
+
+      evento.target.disabled =
+        true;
+
+      try {
+        await api(
+          "/configuracoes",
+          {
+            method:
+              "PATCH",
+
+            body:
+              JSON.stringify({
+                nome_fantasia:
+                  novoNome,
+              }),
+          },
+        );
+
+        mostrarToast(
+          "Nome da loja atualizado.",
+        );
+
+        await carregarConfiguracoes();
+      } catch (erro) {
+        mostrarToast(
+          erro.message ||
+            "Não foi possível atualizar o nome da loja.",
+          "close",
+        );
+      } finally {
+        evento.target.disabled =
+          false;
+      }
+    },
+  );
+}
+
+
+// ============================================================================
+// CARREGAR PERFIL
+// ============================================================================
+
+function carregarPerfil() {
+  atualizarInformacoesUsuario();
+
+  if (!state.usuario) {
+    return;
+  }
+
+  const campoNome =
+    elemento(
+      "perfilNome",
+    );
+
+  const campoTelefone =
+    elemento(
+      "perfilTelefone",
+    );
+
+  if (campoNome) {
+    campoNome.value =
+      state.usuario.nome || "";
+
+    /*
+      O HTML atual não possui botão para salvar o perfil.
+
+      Por segurança, este campo ficará somente para visualização
+      até adicionarmos uma ação específica de atualização.
+    */
+
+    campoNome.readOnly =
+      true;
+  }
+
+  if (campoTelefone) {
+    /*
+      A tabela usuarios criada no backend não possui telefone.
+
+      O campo ficará vazio e somente para visualização.
+    */
+
+    campoTelefone.value =
+      state.usuario.telefone || "";
+
+    campoTelefone.readOnly =
+      true;
+  }
+}
+
+
+// ============================================================================
+// VERIFICAR DISPONIBILIDADE DO BACKEND
+// ============================================================================
+
+async function verificarServidor() {
+  try {
+    const resposta =
+      await fetch(
+        `${API_BASE_URL}/pronto`,
+      );
+
+    if (!resposta.ok) {
+      throw new Error();
+    }
+
+    return true;
+  } catch (erro) {
+    mostrarToast(
+      "O servidor está indisponível. Verifique se o backend está ligado.",
+      "close",
+    );
+
+    return false;
+  }
+}
+
+
+// ============================================================================
+// VALIDAR ELEMENTOS IMPORTANTES DO HTML
+//
+// Ajuda a encontrar IDs ausentes ou digitados incorretamente.
+// ============================================================================
+
+function validarEstruturaHtml() {
+  const idsObrigatorios = [
+    "page-inicio",
+    "page-contas",
+    "page-conta-detalhe",
+    "page-historico",
+    "page-historico-detalhe",
+    "page-relatorios",
+
+    "statClientes",
+    "statAReceber",
+    "statConcluidos",
+    "movesList",
+
+    "tableContasBody",
+    "cardsContasMobile",
+    "purchasesList",
+
+    "tableHistoricoBody",
+    "cardsHistoricoMobile",
+    "hdPurchasesList",
+
+    "modalNovaConta",
+    "modalCompra",
+    "modalPagamento",
+    "modalSair",
+
+    "toast",
+  ];
+
+  const idsAusentes =
+    idsObrigatorios.filter(
+      (id) => !elemento(id),
+    );
+
+  if (
+    idsAusentes.length > 0
+  ) {
+    console.warn(
+      "Alguns elementos esperados não foram encontrados no HTML:",
+      idsAusentes,
+    );
+  }
+}
+
+
+// ============================================================================
+// TRATAMENTO DE ERROS GERAIS DO FRONT-END
+// ============================================================================
+
+window.addEventListener(
+  "unhandledrejection",
+  (evento) => {
+    console.error(
+      "Promise sem tratamento:",
+      evento.reason,
+    );
+  },
+);
+
+
+window.addEventListener(
+  "error",
+  (evento) => {
+    console.error(
+      "Erro no Front-end:",
+      evento.error ||
+        evento.message,
+    );
+  },
+);
+
+
+// ============================================================================
+// ATUALIZAR DADOS QUANDO A ABA VOLTAR A FICAR ATIVA
+// ============================================================================
+
+document.addEventListener(
+  "visibilitychange",
+  async () => {
+    if (
+      document.visibilityState !==
+        "visible" ||
+      !obterToken()
+    ) {
+      return;
+    }
+
+    try {
+      if (
+        state.paginaAtual ===
+        "inicio"
+      ) {
+        await carregarDashboard();
+      }
+
+      if (
+        state.paginaAtual ===
+        "contas"
+      ) {
+        await carregarContas();
+      }
+
+      if (
+        state.paginaAtual ===
+        "historico"
+      ) {
+        await carregarHistorico();
+      }
+
+      if (
+        state.paginaAtual ===
+        "relatorios"
+      ) {
+        await carregarRelatorios();
+      }
+    } catch (erro) {
+      console.error(
+        "Não foi possível atualizar a página:",
+        erro,
+      );
+    }
+  },
+);
+
+
+// ============================================================================
+// INICIALIZAÇÃO COMPLETA DO SISTEMA
+// ============================================================================
+
+async function iniciarAplicacao() {
+  validarEstruturaHtml();
+
+  paintIcons();
+
+  carregarTemaSalvo();
+
+  carregarUsuarioSalvo();
+
+  configurarFiltrosRelatorio();
+
+  /*
+    O sistema só pode abrir a página principal quando existir um token.
+  */
+
+  if (
+    !verificarSessaoAntesDeIniciar()
+  ) {
+    return;
+  }
+
+  const servidorDisponivel =
+    await verificarServidor();
+
+  if (!servidorDisponivel) {
+    return;
+  }
+
+  try {
+    /*
+      Confirma no backend se o token continua válido
+      e carrega os dados reais do usuário.
+    */
+
+    await carregarUsuarioAtual();
+
+    atualizarPerfilVisual();
+
+    carregarPerfil();
+
+    /*
+      Carrega as configurações para exibir o nome correto da loja.
+    */
+
+    try {
+      await carregarConfiguracoes();
+    } catch (erro) {
+      console.warn(
+        "Não foi possível carregar as configurações da loja:",
+        erro.message,
+      );
+    }
+
+    /*
+      Abre a tela inicial e carrega o dashboard.
+    */
+
+    await irParaPagina(
+      "inicio",
+    );
+  } catch (erro) {
+    console.error(erro);
+
+    mostrarToast(
+      erro.message ||
+        "Não foi possível iniciar o sistema.",
+      "close",
+    );
+  }
+}
+
+
+// ============================================================================
+// INICIAR SOMENTE DEPOIS QUE O HTML ESTIVER PRONTO
+// ============================================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  iniciarAplicacao,
+);
+

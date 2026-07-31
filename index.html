@@ -146,13 +146,13 @@
         <div class="toolbar">
           <div class="search-box">
             <span class="ico" data-ico="search"></span>
-            <input type="text" id="searchContas" placeholder="Pesquisar por nome do cliente" />
+            <input type="text" id="searchContas" autocomplete="off" placeholder="Pesquisar por nome do cliente" />
           </div>
           <select class="select" id="sortContas">
-            <option value="recentes">Mais recentes</option>
-            <option value="antigas">Mais antigas</option>
-            <option value="maior">Maior valor</option>
-            <option value="menor">Menor valor</option>
+            <option value="mais_recente">Mais recentes</option>
+            <option value="mais_antiga">Mais antigas</option>
+            <option value="maior_valor">Maior valor</option>
+            <option value="menor_valor">Menor valor</option>
           </select>
           <button class="btn btn-primary" id="btnNovaContaContas">
             <span class="ico" data-ico="plus"></span> Nova conta
@@ -218,7 +218,7 @@
         <div class="toolbar">
           <div class="search-box">
             <span class="ico" data-ico="search"></span>
-            <input type="text" id="searchHistorico" placeholder="Pesquisar por nome do cliente" />
+            <input type="text" id="searchHistorico" autocomplete="off" placeholder="Pesquisar por nome do cliente" />
           </div>
         </div>
 
@@ -272,8 +272,8 @@
       <section class="page" id="page-relatorios">
         <div class="filters-row" id="reportFilters">
           <button class="chip" data-filter="hoje">Hoje</button>
-          <button class="chip" data-filter="7dias">Últimos 7 dias</button>
-          <button class="chip is-active" data-filter="mes">Mês atual</button>
+          <button class="chip" data-filter="ultimos_7_dias">Últimos 7 dias</button>
+          <button class="chip is-active" data-filter="mes_atual">Mês atual</button>
           <button class="chip" data-filter="personalizado">Personalizado</button>
 
           <div class="custom-filter" id="customFilter" hidden>
@@ -324,11 +324,11 @@
           <div class="settings-list">
             <div class="settings-item">
               <div><strong>Nome da loja</strong><p class="muted">Exibido no topo do sistema</p></div>
-              <input class="input" type="text" value="Mercearia Nogueira" />
+              <input class="input" id="configNomeLoja" type="text" value="Mercearia Nogueira" />
             </div>
             <div class="settings-item">
               <div><strong>Notificações</strong><p class="muted">Avisos sobre novas movimentações</p></div>
-              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+              <label class="switch"><input type="checkbox" id="configNotificacoes" checked><span class="slider"></span></label>
             </div>
             <div class="settings-item">
               <div><strong>Modo escuro</strong><p class="muted">Ajusta o visual para ambientes com pouca luz</p></div>
@@ -350,8 +350,8 @@
             </div>
           </div>
           <div class="settings-list">
-            <div class="settings-item"><div><strong>Nome</strong></div><input class="input" type="text" value="Mercearia Nogueira" /></div>
-            <div class="settings-item"><div><strong>Telefone</strong></div><input class="input" type="text" value="(92) 99999-0000" /></div>
+            <div class="settings-item"><div><strong>Nome</strong></div><input class="input" id="configNomeLoja" type="text" value="Mercearia Nogueira" /></div>
+            <div class="settings-item"><div><strong>Telefone</strong></div><input class="input" id="perfilTelefone" type="text" value="(92) 99999-0000" /></div>
           </div>
         </div>
       </section>
@@ -389,7 +389,7 @@
     <div class="modal-body">
       <div class="search-box">
         <span class="ico" data-ico="search"></span>
-        <input type="text" id="searchClientModal" placeholder="Pesquisar cliente cadastrado" />
+        <input type="text" id="searchClientModal" autocomplete="off" placeholder="Pesquisar cliente cadastrado" />
       </div>
       <div class="client-results" id="clientResults"></div>
 
@@ -401,9 +401,9 @@
       <div class="divider-or"><span>ou cadastre um novo cliente</span></div>
 
       <div class="form-grid">
-        <label>Nome <span class="req">*</span><input class="input" id="newClientNome" placeholder="Nome completo" /></label>
+        <label>Nome <span class="req">*</span><input class="input" id="newClientNome" autocomplete="name" placeholder="Nome completo" /></label>
         <label>Apelido<input class="input" id="newClientApelido" placeholder="Opcional" /></label>
-        <label>Telefone<input class="input" id="newClientTelefone" placeholder="Opcional" /></label>
+        <label>Telefone<input class="input" id="newClientTelefone" autocomplete="tel" placeholder="Opcional" /></label>
         <label>Observação<input class="input" id="newClientObs" placeholder="Opcional" /></label>
       </div>
       <button class="btn btn-primary btn-block" id="btnCadastrarEAbrir">Cadastrar e abrir conta</button>
@@ -442,9 +442,9 @@
       <div class="pay-summary" id="paySummary"></div>
       <label class="block-label">Forma de pagamento</label>
       <div class="pay-methods" id="payMethods">
-        <button class="method-btn is-active" data-method="Dinheiro"><span class="ico" data-ico="cash"></span> Dinheiro</button>
-        <button class="method-btn" data-method="Pix"><span class="ico" data-ico="pix"></span> Pix</button>
-        <button class="method-btn" data-method="Cartão"><span class="ico" data-ico="card"></span> Cartão</button>
+        <button class="method-btn is-active" data-method="DINHEIRO"><span class="ico" data-ico="cash"></span> Dinheiro</button>
+        <button class="method-btn" data-method="PIX"><span class="ico" data-ico="pix"></span> Pix</button>
+        <button class="method-btn" data-method="CARTAO"><span class="ico" data-ico="card"></span> Cartão</button>
       </div>
       <label class="block-label">Observação (opcional)<input class="input" id="pagamentoObs" /></label>
       <button class="btn btn-success btn-block" id="btnConfirmarPagamento">Confirmar pagamento</button>
