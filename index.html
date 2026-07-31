@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Nogueira · Gestão de Contas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Poppins+Italic&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ====================== APP SHELL ====================== -->
+<div class="app">
+
+  <!-- ---------- SIDEBAR (desktop) ---------- -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M20 3C13 8 8 13 8 21c0 6.6 5.4 12 12 12s12-5.4 12-12c0-8-5-13-12-18Z" fill="url(#g1)"/>
+          <path d="M20 9c0 8 0 16 0 24" stroke="#fff" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M20 15c-2.6 1.6-4.4 3-4.4 5.4M20 21c2.6 1.6 4.4 3 4.4 5.4" stroke="#fff" stroke-opacity=".4" stroke-width="1.2" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="g1" x1="8" y1="3" x2="32" y2="33" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#C68A4E"/>
+              <stop offset="1" stop-color="#6E4326"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <strong>Nogueira</strong>
+        <small>Gestão de contas</small>
+      </div>
+    </div>
+
+    <nav class="nav" id="sidebarNav">
+      <button class="nav-item is-active" data-page="inicio">
+        <span class="ico" data-ico="home"></span> Início
+      </button>
+      <button class="nav-item" data-page="contas">
+        <span class="ico" data-ico="wallet"></span> Contas
+      </button>
+      <button class="nav-item" data-page="historico">
+        <span class="ico" data-ico="clock"></span> Histórico
+      </button>
+      <button class="nav-item" data-page="relatorios">
+        <span class="ico" data-ico="chart"></span> Relatórios
+      </button>
+
+      <div class="nav-sep"></div>
+
+      <button class="nav-item" data-page="configuracoes">
+        <span class="ico" data-ico="gear"></span> Configurações
+      </button>
+      <button class="nav-item" data-page="perfil">
+        <span class="ico" data-ico="user"></span> Perfil
+      </button>
+      <button class="nav-item nav-exit" id="btnSair">
+        <span class="ico" data-ico="exit"></span> Sair
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="mini-profile">
+        <span class="avatar">MN</span>
+        <div>
+          <strong>Mercearia Nogueira</strong>
+          <small>Proprietário</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ---------- MAIN ---------- -->
+  <main class="main">
+
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="pageTitle">Início</h1>
+        <p id="pageSubtitle">Visão geral da sua loja hoje</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="btnNovaContaTop">
+          <span class="ico" data-ico="plus"></span> Nova conta
+        </button>
+      </div>
+    </header>
+
+    <div class="pages" id="pages">
+
+      <!-- ============ INÍCIO ============ -->
+      <section class="page is-active" id="page-inicio">
+
+        <div class="cards-row">
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-ico ico-clients"><span class="ico" data-ico="users"></span></span>
+              <span class="stat-label">Clientes cadastrados</span>
+            </div>
+            <div class="stat-value" id="statClientes">0</div>
+            <div class="stat-foot">total desde o início</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-ico ico-receive"><span class="ico" data-ico="hourglass"></span></span>
+              <span class="stat-label">Total a receber</span>
+            </div>
+            <div class="stat-value" id="statAReceber">R$ 0,00</div>
+            <div class="stat-foot" id="statAReceberMes">—</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-ico ico-paid"><span class="ico" data-ico="check"></span></span>
+              <span class="stat-label">Pagamentos concluídos</span>
+            </div>
+            <div class="stat-value" id="statConcluidos">R$ 0,00</div>
+            <div class="stat-foot" id="statConcluidosMes">—</div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-head">
+            <h2>Últimas movimentações</h2>
+          </div>
+          <div class="moves-list" id="movesList"></div>
+        </div>
+      </section>
+
+      <!-- ============ CONTAS ============ -->
+      <section class="page" id="page-contas">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="ico" data-ico="search"></span>
+            <input type="text" id="searchContas" placeholder="Pesquisar por nome do cliente" />
+          </div>
+          <select class="select" id="sortContas">
+            <option value="recentes">Mais recentes</option>
+            <option value="antigas">Mais antigas</option>
+            <option value="maior">Maior valor</option>
+            <option value="menor">Menor valor</option>
+          </select>
+          <button class="btn btn-primary" id="btnNovaContaContas">
+            <span class="ico" data-ico="plus"></span> Nova conta
+          </button>
+        </div>
+
+        <div class="table-wrap desktop-only">
+          <table class="table" id="tableContas">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Aberta em</th>
+                <th>Última compra</th>
+                <th>Registros</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tableContasBody"></tbody>
+          </table>
+        </div>
+
+        <div class="cards-grid mobile-only" id="cardsContasMobile"></div>
+
+        <div class="empty-state" id="contasEmpty" hidden>
+          <span class="ico ico-lg" data-ico="wallet"></span>
+          <h3>Nenhuma conta em aberto</h3>
+          <p>Crie uma nova conta para começar a registrar compras.</p>
+        </div>
+      </section>
+
+      <!-- ============ DETALHES DA CONTA ABERTA ============ -->
+      <section class="page" id="page-conta-detalhe">
+        <button class="btn-back" data-back="contas"><span class="ico" data-ico="back"></span> Voltar para Contas</button>
+
+        <div class="detail-head">
+          <div>
+            <h2 id="dcNome">—</h2>
+            <p class="muted" id="dcMeta">—</p>
+          </div>
+          <div class="detail-total">
+            <span>Total atual</span>
+            <strong id="dcTotal">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-primary" id="btnAddCompra"><span class="ico" data-ico="plus"></span> Adicionar compra</button>
+          <button class="btn btn-success" id="btnConcluirPagamento"><span class="ico" data-ico="check"></span> Concluir pagamento</button>
+        </div>
+
+        <div class="purchases-list" id="purchasesList"></div>
+      </section>
+
+      <!-- ============ HISTÓRICO ============ -->
+      <section class="page" id="page-historico">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="ico" data-ico="search"></span>
+            <input type="text" id="searchHistorico" placeholder="Pesquisar por nome do cliente" />
+          </div>
+        </div>
+
+        <div class="table-wrap desktop-only">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Valor pago</th>
+                <th>Data</th>
+                <th>Forma</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tableHistoricoBody"></tbody>
+          </table>
+        </div>
+
+        <div class="cards-grid mobile-only" id="cardsHistoricoMobile"></div>
+
+        <div class="empty-state" id="historicoEmpty" hidden>
+          <span class="ico ico-lg" data-ico="clock"></span>
+          <h3>Nenhum pagamento concluído ainda</h3>
+          <p>As contas finalizadas aparecerão aqui.</p>
+        </div>
+      </section>
+
+      <!-- ============ DETALHES DO HISTÓRICO ============ -->
+      <section class="page" id="page-historico-detalhe">
+        <button class="btn-back" data-back="historico"><span class="ico" data-ico="back"></span> Voltar para Histórico</button>
+
+        <div class="detail-head">
+          <div>
+            <h2 id="hdNome">—</h2>
+            <p class="muted" id="hdMeta">—</p>
+          </div>
+          <span class="badge badge-success">Pagamento concluído</span>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-secondary" id="btnExportarPDF"><span class="ico" data-ico="file"></span> Exportar PDF</button>
+          <button class="btn btn-secondary" id="btnImprimir"><span class="ico" data-ico="print"></span> Imprimir</button>
+          <button class="btn btn-secondary" id="btnCompartilhar"><span class="ico" data-ico="share"></span> Compartilhar</button>
+          <button class="btn btn-primary" id="btnNovaContaCliente"><span class="ico" data-ico="plus"></span> Nova conta para este cliente</button>
+        </div>
+
+        <div class="purchases-list" id="hdPurchasesList"></div>
+      </section>
+
+      <!-- ============ RELATÓRIOS ============ -->
+      <section class="page" id="page-relatorios">
+        <div class="filters-row" id="reportFilters">
+          <button class="chip" data-filter="hoje">Hoje</button>
+          <button class="chip" data-filter="7dias">Últimos 7 dias</button>
+          <button class="chip is-active" data-filter="mes">Mês atual</button>
+          <button class="chip" data-filter="personalizado">Personalizado</button>
+
+          <div class="custom-filter" id="customFilter" hidden>
+            <select class="select" id="selMes"></select>
+            <select class="select" id="selAno"></select>
+          </div>
+        </div>
+
+        <div class="cards-row">
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico ico-paid"><span class="ico" data-ico="trend"></span></span><span class="stat-label">Faturamento recebido</span></div>
+            <div class="stat-value" id="repFaturamento">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico ico-receive"><span class="ico" data-ico="hourglass"></span></span><span class="stat-label">A receber (em aberto)</span></div>
+            <div class="stat-value" id="repAReceber">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico ico-clients"><span class="ico" data-ico="check"></span></span><span class="stat-label">Pagamentos concluídos</span></div>
+            <div class="stat-value" id="repQtdPagos">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-top"><span class="stat-ico ico-clients"><span class="ico" data-ico="wallet"></span></span><span class="stat-label">Contas em aberto</span></div>
+            <div class="stat-value" id="repQtdAbertas">0</div>
+          </div>
+        </div>
+
+        <div class="section-block two-col">
+          <div class="panel">
+            <h2>Formas de pagamento</h2>
+            <div class="donut-wrap">
+              <svg viewBox="0 0 120 120" class="donut" id="donutChart"></svg>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Clientes que mais compram</h2>
+            <div class="ranking-list" id="rankingList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ CONFIGURAÇÕES ============ -->
+      <section class="page" id="page-configuracoes">
+        <div class="panel narrow">
+          <h2>Configurações</h2>
+          <div class="settings-list">
+            <div class="settings-item">
+              <div><strong>Nome da loja</strong><p class="muted">Exibido no topo do sistema</p></div>
+              <input class="input" type="text" value="Mercearia Nogueira" />
+            </div>
+            <div class="settings-item">
+              <div><strong>Notificações</strong><p class="muted">Avisos sobre novas movimentações</p></div>
+              <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div class="settings-item">
+              <div><strong>Modo escuro</strong><p class="muted">Ajusta o visual para ambientes com pouca luz</p></div>
+              <label class="switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PERFIL ============ -->
+      <section class="page" id="page-perfil">
+        <div class="panel narrow">
+          <h2>Perfil</h2>
+          <div class="profile-card">
+            <span class="avatar avatar-lg">MN</span>
+            <div>
+              <strong>Mercearia Nogueira</strong>
+              <p class="muted">proprietario@nogueira.app</p>
+            </div>
+          </div>
+          <div class="settings-list">
+            <div class="settings-item"><div><strong>Nome</strong></div><input class="input" type="text" value="Mercearia Nogueira" /></div>
+            <div class="settings-item"><div><strong>Telefone</strong></div><input class="input" type="text" value="(92) 99999-0000" /></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ---------- BOTTOM NAV (mobile) ---------- -->
+<nav class="bottom-nav mobile-only">
+  <button class="bn-item is-active" data-page="inicio"><span class="ico" data-ico="home"></span><small>Início</small></button>
+  <button class="bn-item" data-page="contas"><span class="ico" data-ico="wallet"></span><small>Contas</small></button>
+  <button class="bn-item" data-page="historico"><span class="ico" data-ico="clock"></span><small>Histórico</small></button>
+  <button class="bn-item" data-page="relatorios"><span class="ico" data-ico="chart"></span><small>Relatórios</small></button>
+  <button class="bn-item" id="btnMais"><span class="ico" data-ico="more"></span><small>Mais</small></button>
+</nav>
+
+<!-- ---------- SHEET "MAIS" (mobile) ---------- -->
+<div class="sheet-overlay" id="maisOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button class="sheet-item" data-page="configuracoes"><span class="ico" data-ico="gear"></span> Configurações</button>
+    <button class="sheet-item" data-page="perfil"><span class="ico" data-ico="user"></span> Perfil</button>
+    <button class="sheet-item sheet-exit" id="btnSairMais"><span class="ico" data-ico="exit"></span> Sair</button>
+  </div>
+</div>
+
+<!-- ---------- MODAL: NOVA CONTA ---------- -->
+<div class="modal-overlay" id="modalNovaConta">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Nova conta</h3>
+      <button class="modal-close" data-close><span class="ico" data-ico="close"></span></button>
+    </div>
+    <div class="modal-body">
+      <div class="search-box">
+        <span class="ico" data-ico="search"></span>
+        <input type="text" id="searchClientModal" placeholder="Pesquisar cliente cadastrado" />
+      </div>
+      <div class="client-results" id="clientResults"></div>
+
+      <div class="warning-box" id="clientHasOpenWarning" hidden>
+        <p>Este cliente já possui uma conta em aberto.</p>
+        <button class="btn btn-secondary" id="btnAcessarContaAtual">Acessar conta atual</button>
+      </div>
+
+      <div class="divider-or"><span>ou cadastre um novo cliente</span></div>
+
+      <div class="form-grid">
+        <label>Nome <span class="req">*</span><input class="input" id="newClientNome" placeholder="Nome completo" /></label>
+        <label>Apelido<input class="input" id="newClientApelido" placeholder="Opcional" /></label>
+        <label>Telefone<input class="input" id="newClientTelefone" placeholder="Opcional" /></label>
+        <label>Observação<input class="input" id="newClientObs" placeholder="Opcional" /></label>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnCadastrarEAbrir">Cadastrar e abrir conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- MODAL: ADICIONAR COMPRA ---------- -->
+<div class="modal-overlay" id="modalCompra">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Adicionar compra</h3>
+      <button class="modal-close" data-close><span class="ico" data-ico="close"></span></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label>Produto / Descrição <span class="req">*</span><input class="input" id="compraDesc" placeholder="Ex: Arroz e refrigerante" /></label>
+        <label>Valor <span class="req">*</span>
+          <div class="money-input"><span>R$</span><input class="input" id="compraValor" inputmode="decimal" placeholder="0,00" /></div>
+        </label>
+        <label>Observação<input class="input" id="compraObs" placeholder="Opcional" /></label>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSalvarCompra">Registrar compra</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- MODAL: CONCLUIR PAGAMENTO ---------- -->
+<div class="modal-overlay" id="modalPagamento">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Concluir pagamento</h3>
+      <button class="modal-close" data-close><span class="ico" data-ico="close"></span></button>
+    </div>
+    <div class="modal-body">
+      <div class="pay-summary" id="paySummary"></div>
+      <label class="block-label">Forma de pagamento</label>
+      <div class="pay-methods" id="payMethods">
+        <button class="method-btn is-active" data-method="Dinheiro"><span class="ico" data-ico="cash"></span> Dinheiro</button>
+        <button class="method-btn" data-method="Pix"><span class="ico" data-ico="pix"></span> Pix</button>
+        <button class="method-btn" data-method="Cartão"><span class="ico" data-ico="card"></span> Cartão</button>
+      </div>
+      <label class="block-label">Observação (opcional)<input class="input" id="pagamentoObs" /></label>
+      <button class="btn btn-success btn-block" id="btnConfirmarPagamento">Confirmar pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- MODAL: SAIR ---------- -->
+<div class="modal-overlay" id="modalSair">
+  <div class="modal modal-sm">
+    <div class="modal-body center">
+      <span class="ico ico-lg" data-ico="exit"></span>
+      <h3>Sair do sistema?</h3>
+      <p class="muted">Você poderá entrar novamente a qualquer momento.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" data-close>Cancelar</button>
+        <button class="btn btn-danger" id="btnConfirmarSair">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- TOAST ---------- -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
