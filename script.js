@@ -29,6 +29,10 @@ const ICONS = {
   trend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 16 9 10.5l4 4 7-7.5"/><path d="M15.5 6.5H20V11"/></svg>`,
   edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 4.8 19 8.6 8.4 19.2 4 20l.8-4.4Z"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2M7 7l1 12.5A1.5 1.5 0 0 0 9.5 21h5a1.5 1.5 0 0 0 1.5-1.5L17 7"/></svg>`,
+  chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>`,
+  chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>`,
+  calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>`,
+  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`,
 };
 function paintIcons(root=document){
   root.querySelectorAll('[data-ico]').forEach(el=>{
@@ -117,7 +121,10 @@ const accounts = [
     id:'a9', clientId:'c1', status:'concluida', openedAt: mkDate(2026,5,2,9,0),
     purchases:[
       { id:'p17', desc:'Mercado de junho', value:310.0, date: mkDate(2026,5,2,9,0), note:'' },
-    ], payment:{ method:'Pix', date: mkDate(2026,5,28,9,0), note:'' }
+    ],
+    /* conta aberta em junho, mas paga somente em julho: o valor deve continuar
+       contando como "recebido" em junho, e não em julho */
+    payment:{ method:'Pix', date: mkDate(2026,6,15,9,0), note:'' }
   },
 ];
 
@@ -141,8 +148,27 @@ function clientById(id){ return clients.find(c=>c.id===id); }
 function accountTotal(acc){ return acc.purchases.reduce((s,p)=>s+p.value,0); }
 function lastPurchase(acc){ return acc.purchases.slice().sort((a,b)=>b.date-a.date)[0]; }
 function openAccounts(){ return accounts.filter(a=>a.status==='aberta'); }
+function closedFechada(){ return accounts.filter(a=>a.status==='fechada'); }
+function pendingAccounts(){ return accounts.filter(a=>a.status==='aberta'||a.status==='fechada'); }
 function closedAccounts(){ return accounts.filter(a=>a.status==='concluida'); }
-function clientHasOpenAccount(clientId){ return openAccounts().find(a=>a.clientId===clientId); }
+
+/* A conta pertence ao mês em que foi ABERTA (competência), independente de quando é paga */
+function competencia(acc){ return { m: acc.openedAt.getMonth(), y: acc.openedAt.getFullYear() }; }
+function isBeforeCurrentMonth(y,m){ return (y < TODAY.getFullYear()) || (y===TODAY.getFullYear() && m < TODAY.getMonth()); }
+
+/* Ao virar o mês, toda conta ainda "aberta" de um mês anterior passa a "fechada":
+   continua com o valor pendente, vinculada ao mês original, sem poder receber novas compras. */
+function autoCloseAccounts(){
+  accounts.forEach(acc=>{
+    if(acc.status==='aberta'){
+      const c = competencia(acc);
+      if(isBeforeCurrentMonth(c.y, c.m)) acc.status = 'fechada';
+    }
+  });
+}
+
+/* Cliente não pode abrir nova conta enquanto tiver uma conta aberta OU fechada (pendente de pagamento) */
+function clientPendingAccount(clientId){ return pendingAccounts().find(a=>a.clientId===clientId); }
 
 function showToast(msg, icon='check'){
   const t = document.getElementById('toast');
@@ -192,22 +218,43 @@ document.querySelectorAll('[data-back]').forEach(btn=>{
 });
 
 /* ---------------- RENDER: INÍCIO ---------------- */
+/* Mês em consulta na página inicial. Por padrão, o mês atual. */
+let homeMonth = TODAY.getMonth();
+let homeYear = TODAY.getFullYear();
+
+/* Estatísticas de um mês, sempre pela competência (mês em que a conta foi aberta),
+   e não pela data em que o pagamento efetivamente aconteceu. */
+function computeMonthStats(m, y){
+  const inMonth = acc => { const c = competencia(acc); return c.m===m && c.y===y; };
+  const pendentes = accounts.filter(a=> inMonth(a) && (a.status==='aberta' || a.status==='fechada'));
+  const pagas = accounts.filter(a=> inMonth(a) && a.status==='concluida');
+  return {
+    totalAReceber: pendentes.reduce((s,a)=>s+accountTotal(a),0),
+    totalRecebido: pagas.reduce((s,a)=>s+accountTotal(a),0),
+    qtdPendentes: pendentes.length,
+    qtdPagas: pagas.length,
+  };
+}
+
+function updateMonthNavUI(){
+  const label = `${MESES[homeMonth][0].toUpperCase()+MESES[homeMonth].slice(1)} de ${homeYear}`;
+  document.getElementById('homeMonthLabel').textContent = label;
+  const atCurrent = homeMonth===TODAY.getMonth() && homeYear===TODAY.getFullYear();
+  document.getElementById('btnMesProximo').disabled = atCurrent;
+  document.getElementById('btnMesAtual').hidden = atCurrent;
+}
+
 function renderInicio(){
+  autoCloseAccounts();
   document.getElementById('statClientes').textContent = clients.length;
 
-  const isCurMonth = d => d.getMonth()===TODAY.getMonth() && d.getFullYear()===TODAY.getFullYear();
+  updateMonthNavUI();
+  const stats = computeMonthStats(homeMonth, homeYear);
 
-  let aReceber = 0;
-  openAccounts().forEach(acc=> acc.purchases.forEach(p=>{ if(isCurMonth(p.date)) aReceber += p.value; }));
-
-  let concluidos = 0;
-  closedAccounts().forEach(acc=>{ if(acc.payment && isCurMonth(acc.payment.date)) concluidos += accountTotal(acc); });
-
-  document.getElementById('statAReceber').textContent = BRL(aReceber);
-  document.getElementById('statConcluidos').textContent = BRL(concluidos);
-  const label = `${MESES[TODAY.getMonth()][0].toUpperCase()+MESES[TODAY.getMonth()].slice(1)} de ${TODAY.getFullYear()}`;
-  document.getElementById('statAReceberMes').textContent = label;
-  document.getElementById('statConcluidosMes').textContent = label;
+  document.getElementById('statAReceber').textContent = BRL(stats.totalAReceber);
+  document.getElementById('statConcluidos').textContent = BRL(stats.totalRecebido);
+  document.getElementById('statAReceberMes').textContent = `${stats.qtdPendentes} conta(s) pendente(s)`;
+  document.getElementById('statConcluidosMes').textContent = `${stats.qtdPagas} pagamento(s) concluído(s)`;
 
   const withMoves = openAccounts()
     .map(acc=>({acc, last: lastPurchase(acc)}))
@@ -264,7 +311,7 @@ let contasSort = 'recentes';
 let contasSearch = '';
 
 function renderContas(){
-  let list = openAccounts().filter(acc=>{
+  let list = pendingAccounts().filter(acc=>{
     const cl = clientById(acc.clientId);
     return cl.name.toLowerCase().includes(contasSearch.toLowerCase());
   });
@@ -279,12 +326,20 @@ function renderContas(){
 
   document.getElementById('contasEmpty').hidden = list.length>0;
 
+  const statusBadge = acc => acc.status==='fechada'
+    ? `<span class="badge badge-closed">Fechada</span>`
+    : `<span class="badge badge-open">Aberta</span>`;
+  const addCompraBtn = acc => acc.status==='fechada'
+    ? `<button class="btn btn-secondary" disabled title="Conta fechada: aguardando pagamento">Fechada</button>`
+    : `<button class="btn btn-primary" data-add-compra="${acc.id}">Adicionar compra</button>`;
+
   const tbody = document.getElementById('tableContasBody');
   tbody.innerHTML = list.map(acc=>{
     const cl = clientById(acc.clientId);
     const lp = lastPurchase(acc);
     return `<tr>
       <td><strong>${cl.name}</strong></td>
+      <td>${statusBadge(acc)}</td>
       <td>${fmtDate(acc.openedAt)}</td>
       <td>${lp ? relDay(lp.date) : '—'}</td>
       <td>${acc.purchases.length}</td>
@@ -292,7 +347,7 @@ function renderContas(){
       <td>
         <div class="row-actions">
           <button class="btn btn-secondary" data-open-acc="${acc.id}">Ver conta</button>
-          <button class="btn btn-primary" data-add-compra="${acc.id}">Adicionar compra</button>
+          ${addCompraBtn(acc)}
         </div>
       </td>
     </tr>`;
@@ -304,12 +359,13 @@ function renderContas(){
     const lp = lastPurchase(acc);
     return `<div class="item-card">
       <div class="item-card-top"><strong>${cl.name}</strong><span class="value">${BRL(accountTotal(acc))}</span></div>
+      <p>${statusBadge(acc)}</p>
       <p>Conta aberta em ${fmtDate(acc.openedAt)}</p>
       <p>${lp ? 'Última compra ' + relDay(lp.date) : 'Sem compras registradas'}</p>
       <p>${acc.purchases.length} registro(s)</p>
       <div class="item-actions">
         <button class="btn btn-secondary" data-open-acc="${acc.id}">Ver conta</button>
-        <button class="btn btn-primary" data-add-compra="${acc.id}">Adicionar compra</button>
+        ${addCompraBtn(acc)}
       </div>
     </div>`;
   }).join('');
@@ -332,6 +388,12 @@ function openContaDetalhe(accId){
   document.getElementById('dcNome').textContent = cl.name;
   document.getElementById('dcMeta').textContent = `Aberta em ${fmtDate(acc.openedAt)} · Última movimentação: ${lp ? relDay(lp.date) : '—'}`;
   document.getElementById('dcTotal').textContent = BRL(accountTotal(acc));
+
+  const isFechada = acc.status==='fechada';
+  document.getElementById('dcClosedBanner').hidden = !isFechada;
+  const btnAdd = document.getElementById('btnAddCompra');
+  btnAdd.disabled = isFechada;
+  btnAdd.title = isFechada ? 'Conta fechada: não é possível adicionar novas compras' : '';
 
   const list = document.getElementById('purchasesList');
   const sorted = acc.purchases.slice().sort((a,b)=>b.date-a.date);
@@ -403,9 +465,13 @@ function renderClientResults(query){
 document.getElementById('searchClientModal').addEventListener('input', e=> renderClientResults(e.target.value));
 
 function handlePickClient(clientId){
-  const openAcc = clientHasOpenAccount(clientId);
-  if(openAcc){
-    pendingOpenClientId = openAcc.id;
+  const pendingAcc = clientPendingAccount(clientId);
+  if(pendingAcc){
+    pendingOpenClientId = pendingAcc.id;
+    const msg = pendingAcc.status==='fechada'
+      ? 'Este cliente possui uma conta fechada aguardando pagamento. É preciso concluir o pagamento antes de abrir uma nova conta.'
+      : 'Este cliente já possui uma conta em aberto.';
+    document.getElementById('clientHasOpenWarningText').textContent = msg;
     document.getElementById('clientHasOpenWarning').hidden = false;
   } else {
     createAccountForClient(clientId);
@@ -641,7 +707,7 @@ function renderRelatorios(){
   const pagos = closedAccounts().filter(a=> inReportRange(a.payment.date));
   const faturamento = pagos.reduce((s,a)=>s+accountTotal(a),0);
 
-  const abertas = openAccounts();
+  const abertas = pendingAccounts();
   const aReceber = abertas.reduce((s,a)=>s+accountTotal(a),0);
 
   document.getElementById('repFaturamento').textContent = BRL(faturamento);
@@ -729,7 +795,23 @@ document.getElementById('darkModeToggle').addEventListener('change', e=>{
   document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : 'light');
 });
 
+/* ---------------- NAVEGAÇÃO DE MÊS (Início) ---------------- */
+document.getElementById('btnMesAnterior').addEventListener('click', ()=>{
+  homeMonth--; if(homeMonth<0){ homeMonth=11; homeYear--; }
+  renderInicio();
+});
+document.getElementById('btnMesProximo').addEventListener('click', (e)=>{
+  if(e.currentTarget.disabled) return;
+  homeMonth++; if(homeMonth>11){ homeMonth=0; homeYear++; }
+  renderInicio();
+});
+document.getElementById('btnMesAtual').addEventListener('click', ()=>{
+  homeMonth = TODAY.getMonth(); homeYear = TODAY.getFullYear();
+  renderInicio();
+});
+
 /* ---------------- INICIALIZAÇÃO ---------------- */
+autoCloseAccounts();
 paintIcons();
 setupReportFilters();
 renderInicio();

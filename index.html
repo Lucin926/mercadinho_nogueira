@@ -94,6 +94,16 @@
       <!-- ============ INÍCIO ============ -->
       <section class="page is-active" id="page-inicio">
 
+        <div class="month-nav">
+          <button class="month-arrow" id="btnMesAnterior" aria-label="Mês anterior"><span class="ico" data-ico="chevronLeft"></span></button>
+          <div class="month-label">
+            <span class="ico" data-ico="calendar"></span>
+            <strong id="homeMonthLabel">Julho de 2026</strong>
+          </div>
+          <button class="month-arrow" id="btnMesProximo" aria-label="Próximo mês"><span class="ico" data-ico="chevronRight"></span></button>
+          <button class="month-today" id="btnMesAtual" hidden>Voltar ao mês atual</button>
+        </div>
+
         <div class="cards-row">
           <div class="stat-card">
             <div class="stat-top">
@@ -116,7 +126,7 @@
           <div class="stat-card">
             <div class="stat-top">
               <span class="stat-ico ico-paid"><span class="ico" data-ico="check"></span></span>
-              <span class="stat-label">Pagamentos concluídos</span>
+              <span class="stat-label">Total recebido</span>
             </div>
             <div class="stat-value" id="statConcluidos">R$ 0,00</div>
             <div class="stat-foot" id="statConcluidosMes">—</div>
@@ -154,6 +164,7 @@
             <thead>
               <tr>
                 <th>Cliente</th>
+                <th>Status</th>
                 <th>Aberta em</th>
                 <th>Última compra</th>
                 <th>Registros</th>
@@ -177,6 +188,11 @@
       <!-- ============ DETALHES DA CONTA ABERTA ============ -->
       <section class="page" id="page-conta-detalhe">
         <button class="btn-back" data-back="contas"><span class="ico" data-ico="back"></span> Voltar para Contas</button>
+
+        <div class="closed-banner" id="dcClosedBanner" hidden>
+          <span class="ico" data-ico="lock"></span>
+          <span>Esta conta foi fechada automaticamente ao final do mês de referência e não recebe mais compras. Ela permanece aguardando pagamento.</span>
+        </div>
 
         <div class="detail-head">
           <div>
@@ -280,7 +296,7 @@
             <div class="stat-value" id="repQtdPagos">0</div>
           </div>
           <div class="stat-card">
-            <div class="stat-top"><span class="stat-ico ico-clients"><span class="ico" data-ico="wallet"></span></span><span class="stat-label">Contas em aberto</span></div>
+            <div class="stat-top"><span class="stat-ico ico-clients"><span class="ico" data-ico="wallet"></span></span><span class="stat-label">Contas pendentes</span></div>
             <div class="stat-value" id="repQtdAbertas">0</div>
           </div>
         </div>
@@ -378,7 +394,7 @@
       <div class="client-results" id="clientResults"></div>
 
       <div class="warning-box" id="clientHasOpenWarning" hidden>
-        <p>Este cliente já possui uma conta em aberto.</p>
+        <p id="clientHasOpenWarningText">Este cliente já possui uma conta em aberto.</p>
         <button class="btn btn-secondary" id="btnAcessarContaAtual">Acessar conta atual</button>
       </div>
 

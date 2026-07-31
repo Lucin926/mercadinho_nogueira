@@ -174,6 +174,43 @@ input,select{ font-family:inherit; }
 }
 .btn-back:hover{ color:var(--copper-500); }
 
+/* ---------------- MONTH NAVIGATOR ---------------- */
+.month-nav{
+  display:flex; align-items:center; gap:10px; margin-bottom:18px;
+}
+.month-arrow{
+  width:36px; height:36px; border-radius:11px; border:1px solid var(--line); background:var(--paper);
+  color:var(--ink-soft); display:flex; align-items:center; justify-content:center;
+  transition:all .15s var(--ease);
+}
+.month-arrow:hover:not(:disabled){ border-color:var(--copper-500); color:var(--walnut-700); background:var(--ivory-2); }
+.month-arrow:disabled{ opacity:.35; cursor:default; }
+.month-label{
+  display:flex; align-items:center; gap:8px;
+  background:var(--paper); border:1px solid var(--line-soft); border-radius:12px;
+  padding:8px 16px; font-size:13.5px; box-shadow:var(--shadow-sm);
+}
+.month-label .ico{ color:var(--copper-500); width:17px; height:17px; }
+.month-label strong{ font-weight:600; }
+.month-today{
+  border:none; background:none; color:var(--copper-500); font-size:12.5px; font-weight:600;
+  padding:6px 10px; border-radius:9px;
+}
+.month-today:hover{ background:var(--copper-100); }
+
+/* ---------------- CLOSED ACCOUNT BANNER ---------------- */
+.closed-banner{
+  display:flex; align-items:center; gap:10px;
+  background:var(--amber-bg); border:1px solid #E9C99A; color:#7A4E1D;
+  border-radius:var(--radius-md); padding:14px 16px; margin-bottom:16px; font-size:13px;
+}
+.closed-banner .ico{ flex:0 0 auto; width:18px; height:18px; }
+
+/* ---------------- STATUS BADGES ---------------- */
+.badge-open{ background:var(--blue-bg); color:var(--blue); }
+.badge-closed{ background:var(--amber-bg); color:var(--amber); }
+.btn:disabled, .btn[disabled]{ opacity:.4; cursor:not-allowed; filter:none !important; transform:none !important; }
+
 /* ---------------- STAT CARDS ---------------- */
 .cards-row{ display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; margin-bottom:34px; }
 .stat-card{
