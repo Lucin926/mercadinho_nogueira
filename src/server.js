@@ -1160,122 +1160,6 @@ app.get(
 );
 
 
-// ============================================================================
-// ROTA NÃO ENCONTRADA
-// ============================================================================
-
-app.use((request, response, next) => {
-  return next(
-    criarErro(
-      `A rota ${request.method} ${request.originalUrl} não foi encontrada.`,
-      404,
-      "ROTA_NAO_ENCONTRADA",
-    ),
-  );
-});
-
-
-// ============================================================================
-// TRATAMENTO GLOBAL DE ERROS
-// ============================================================================
-
-app.use((erro, request, response, next) => {
-  console.error("============================================");
-  console.error("ERRO NA API");
-  console.error("Método:", request.method);
-  console.error("Rota:", request.originalUrl);
-  console.error("Mensagem:", erro.message);
-
-  if (NODE_ENV === "development") {
-    console.error(erro.stack);
-  }
-
-  console.error("============================================");
-
-  if (erro instanceof z.ZodError) {
-    return response.status(422).json({
-      sucesso: false,
-      mensagem:
-        "Existem dados inválidos na requisição.",
-      codigo: "DADOS_INVALIDOS",
-      detalhes: erro.issues.map((item) => ({
-        campo: item.path.join("."),
-        mensagem: item.message,
-      })),
-    });
-  }
-
-  // Chave duplicada no PostgreSQL.
-  if (erro.code === "23505") {
-    return response.status(409).json({
-      sucesso: false,
-      mensagem:
-        "Já existe um registro com essas informações.",
-      codigo: "REGISTRO_DUPLICADO",
-    });
-  }
-
-  // Violação de chave estrangeira.
-  if (erro.code === "23503") {
-    return response.status(409).json({
-      sucesso: false,
-      mensagem:
-        "A operação não pode ser realizada porque existem registros relacionados.",
-      codigo: "REGISTRO_RELACIONADO",
-    });
-  }
-
-  // Violação de CHECK.
-  if (erro.code === "23514") {
-    return response.status(422).json({
-      sucesso: false,
-      mensagem:
-        "Um valor informado não atende às regras do banco de dados.",
-      codigo: "REGRA_DO_BANCO_VIOLADA",
-    });
-  }
-
-  // Valor inválido para ENUM.
-  if (erro.code === "22P02") {
-    return response.status(422).json({
-      sucesso: false,
-      mensagem:
-        "Um dos valores informados possui formato inválido.",
-      codigo: "VALOR_INVALIDO",
-    });
-  }
-
-  const status =
-    Number.isInteger(erro.status)
-      ? erro.status
-      : 500;
-
-  const resposta = {
-    sucesso: false,
-
-    mensagem:
-      status === 500
-        ? "Ocorreu um erro interno no servidor."
-        : erro.message,
-
-    codigo:
-      erro.codigo || "ERRO_INTERNO",
-  };
-
-  if (erro.detalhes !== undefined) {
-    resposta.detalhes = erro.detalhes;
-  }
-
-  if (
-    NODE_ENV === "development" &&
-    status === 500
-  ) {
-    resposta.erro_desenvolvimento = erro.message;
-  }
-
-  return response.status(status).json(resposta);
-});
-
 
 // ============================================================================
 // ENCERRAMENTO SEGURO
@@ -9938,6 +9822,123 @@ app.post("/api/setup/admin", async (req, res) => {
     });
 
   }
+});
+
+
+// ============================================================================
+// ROTA NÃO ENCONTRADA
+// ============================================================================
+
+app.use((request, response, next) => {
+  return next(
+    criarErro(
+      `A rota ${request.method} ${request.originalUrl} não foi encontrada.`,
+      404,
+      "ROTA_NAO_ENCONTRADA",
+    ),
+  );
+});
+
+
+// ============================================================================
+// TRATAMENTO GLOBAL DE ERROS
+// ============================================================================
+
+app.use((erro, request, response, next) => {
+  console.error("============================================");
+  console.error("ERRO NA API");
+  console.error("Método:", request.method);
+  console.error("Rota:", request.originalUrl);
+  console.error("Mensagem:", erro.message);
+
+  if (NODE_ENV === "development") {
+    console.error(erro.stack);
+  }
+
+  console.error("============================================");
+
+  if (erro instanceof z.ZodError) {
+    return response.status(422).json({
+      sucesso: false,
+      mensagem:
+        "Existem dados inválidos na requisição.",
+      codigo: "DADOS_INVALIDOS",
+      detalhes: erro.issues.map((item) => ({
+        campo: item.path.join("."),
+        mensagem: item.message,
+      })),
+    });
+  }
+
+  // Chave duplicada no PostgreSQL.
+  if (erro.code === "23505") {
+    return response.status(409).json({
+      sucesso: false,
+      mensagem:
+        "Já existe um registro com essas informações.",
+      codigo: "REGISTRO_DUPLICADO",
+    });
+  }
+
+  // Violação de chave estrangeira.
+  if (erro.code === "23503") {
+    return response.status(409).json({
+      sucesso: false,
+      mensagem:
+        "A operação não pode ser realizada porque existem registros relacionados.",
+      codigo: "REGISTRO_RELACIONADO",
+    });
+  }
+
+  // Violação de CHECK.
+  if (erro.code === "23514") {
+    return response.status(422).json({
+      sucesso: false,
+      mensagem:
+        "Um valor informado não atende às regras do banco de dados.",
+      codigo: "REGRA_DO_BANCO_VIOLADA",
+    });
+  }
+
+  // Valor inválido para ENUM.
+  if (erro.code === "22P02") {
+    return response.status(422).json({
+      sucesso: false,
+      mensagem:
+        "Um dos valores informados possui formato inválido.",
+      codigo: "VALOR_INVALIDO",
+    });
+  }
+
+  const status =
+    Number.isInteger(erro.status)
+      ? erro.status
+      : 500;
+
+  const resposta = {
+    sucesso: false,
+
+    mensagem:
+      status === 500
+        ? "Ocorreu um erro interno no servidor."
+        : erro.message,
+
+    codigo:
+      erro.codigo || "ERRO_INTERNO",
+  };
+
+  if (erro.detalhes !== undefined) {
+    resposta.detalhes = erro.detalhes;
+  }
+
+  if (
+    NODE_ENV === "development" &&
+    status === 500
+  ) {
+    resposta.erro_desenvolvimento = erro.message;
+  }
+
+  return response.status(status).json(resposta);
 });
 
 

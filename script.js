@@ -2809,31 +2809,33 @@ function conectarBotoesExcluirCompra(
 // SALVAR COMPRA
 // ============================================================================
 
+let salvandoCompra = false;
+
 const botaoSalvarCompra =
-  elemento(
-    "btnSalvarCompra",
-  );
+  elemento("btnSalvarCompra");
 
 if (botaoSalvarCompra) {
   botaoSalvarCompra.addEventListener(
     "click",
     async () => {
+      // Impede dois ou mais envios simultâneos.
+      if (salvandoCompra) {
+        return;
+      }
+
       const descricao =
-        elemento(
-          "compraDesc",
-        )?.value.trim();
+        elemento("compraDesc")
+          ?.value.trim();
 
       const valor =
         converterValorInput(
-          elemento(
-            "compraValor",
-          )?.value,
+          elemento("compraValor")
+            ?.value,
         );
 
       const observacao =
-        elemento(
-          "compraObs",
-        )?.value.trim() || "";
+        elemento("compraObs")
+          ?.value.trim() || "";
 
       if (!descricao) {
         mostrarToast(
@@ -2856,6 +2858,8 @@ if (botaoSalvarCompra) {
         return;
       }
 
+      salvandoCompra = true;
+
       definirCarregamentoBotao(
         botaoSalvarCompra,
         true,
@@ -2863,23 +2867,26 @@ if (botaoSalvarCompra) {
       );
 
       try {
-        if (
-          state.compraEditando
-        ) {
-          await api(
-            `/compras/${
-              state.compraEditando.id
-            }`,
-            {
-              method:
-                "PATCH",
+        const contaId =
+          modalCompra.dataset.contaId;
 
-              body:
-                JSON.stringify({
-                  descricao,
-                  valor,
-                  observacao,
-                }),
+        if (!contaId) {
+          throw new Error(
+            "A conta da compra não foi identificada.",
+          );
+        }
+
+        if (state.compraEditando) {
+          await api(
+            `/compras/${state.compraEditando.id}`,
+            {
+              method: "PATCH",
+
+              body: JSON.stringify({
+                descricao,
+                valor,
+                observacao,
+              }),
             },
           );
 
@@ -2888,20 +2895,15 @@ if (botaoSalvarCompra) {
           );
         } else {
           await api(
-            `/contas/${
-              modalCompra.dataset
-                .contaId
-            }/compras`,
+            `/contas/${contaId}/compras`,
             {
-              method:
-                "POST",
+              method: "POST",
 
-              body:
-                JSON.stringify({
-                  descricao,
-                  valor,
-                  observacao,
-                }),
+              body: JSON.stringify({
+                descricao,
+                valor,
+                observacao,
+              }),
             },
           );
 
@@ -2910,21 +2912,32 @@ if (botaoSalvarCompra) {
           );
         }
 
-        fecharModal(
-          modalCompra,
+        // Fecha o modal imediatamente após o cadastro.
+        fecharModal(modalCompra);
+
+        // Limpa os campos para evitar novo envio acidental.
+        elemento("compraDesc").value = "";
+        elemento("compraValor").value = "";
+        elemento("compraObs").value = "";
+
+        state.compraEditando = null;
+
+        // Atualiza os detalhes da conta.
+        await abrirDetalhesConta(contaId);
+      } catch (erro) {
+        console.error(
+          "Erro ao salvar compra:",
+          erro,
         );
 
-        await abrirDetalhesConta(
-          modalCompra.dataset
-            .contaId,
-        );
-      } catch (erro) {
         mostrarToast(
           erro.message ||
             "Não foi possível salvar a compra.",
           "close",
         );
       } finally {
+        salvandoCompra = false;
+
         definirCarregamentoBotao(
           botaoSalvarCompra,
           false,
