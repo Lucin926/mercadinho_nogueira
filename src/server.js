@@ -27,6 +27,7 @@ import PDFDocument from "pdfkit";
 
 const app = express();
 const { Pool } = pg;
+app.set("trust proxy", 1);
 
 const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
