@@ -53,6 +53,9 @@
 
       <div class="nav-sep"></div>
 
+      <button class="nav-item admin-only" data-page="produtos" hidden>
+        <span class="ico" data-ico="barcode"></span> Produtos
+      </button>
       <button class="nav-item" data-page="configuracoes">
         <span class="ico" data-ico="gear"></span> Configurações
       </button>
@@ -318,6 +321,56 @@
         </div>
       </section>
 
+
+
+      <!-- ============ PRODUTOS (SOMENTE ADMINISTRADOR) ============ -->
+      <section class="page" id="page-produtos">
+        <div class="toolbar products-toolbar">
+          <div class="search-box">
+            <span class="ico" data-ico="search"></span>
+            <input type="text" id="searchProdutos" autocomplete="off" placeholder="Pesquisar por nome, categoria ou código de barras" />
+          </div>
+          <select class="select" id="filterProdutosAtivos">
+            <option value="true">Produtos ativos</option>
+            <option value="false">Produtos desativados</option>
+            <option value="">Todos os produtos</option>
+          </select>
+          <button class="btn btn-primary" id="btnNovoProduto">
+            <span class="ico" data-ico="plus"></span> Novo produto
+          </button>
+        </div>
+
+        <div class="table-wrap desktop-only">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Código de barras</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tableProdutosBody"></tbody>
+          </table>
+        </div>
+
+        <div class="cards-grid mobile-only" id="cardsProdutosMobile"></div>
+
+        <div class="empty-state" id="produtosEmpty" hidden>
+          <span class="ico ico-lg" data-ico="barcode"></span>
+          <h3>Nenhum produto encontrado</h3>
+          <p>Cadastre o primeiro produto para usar a leitura de código de barras.</p>
+        </div>
+
+        <div class="pagination" id="produtosPaginacao" hidden>
+          <button class="btn btn-secondary" id="btnProdutosAnterior">Anterior</button>
+          <span id="produtosPaginaInfo">Página 1 de 1</span>
+          <button class="btn btn-secondary" id="btnProdutosProximo">Próxima</button>
+        </div>
+      </section>
+
       <!-- ============ CONFIGURAÇÕES ============ -->
       <section class="page" id="page-configuracoes">
         <div class="panel narrow">
@@ -374,6 +427,7 @@
 <div class="sheet-overlay" id="maisOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
+    <button class="sheet-item admin-only" data-page="produtos" hidden><span class="ico" data-ico="barcode"></span> Produtos</button>
     <button class="sheet-item" data-page="configuracoes"><span class="ico" data-ico="settings"></span>Configurações</button>
     <button class="sheet-item" data-page="perfil"><span class="ico" data-ico="user"></span> Perfil</button>
     <button class="sheet-item sheet-exit" id="btnSairMais"><span class="ico" data-ico="logout"></span>Sair</button>
@@ -427,7 +481,57 @@
         </label>
         <label>Observação<input class="input" id="compraObs" placeholder="Opcional" /></label>
       </div>
-      <button class="btn btn-primary btn-block" id="btnSalvarCompra">Registrar compra</button>
+      <button class="btn btn-secondary btn-block" id="btnEscanearProduto" type="button">
+        <span class="ico" data-ico="barcode"></span> Escanear código de barras
+      </button>
+      <button class="btn btn-primary btn-block" id="btnSalvarCompra">Registrar compra manualmente</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ---------- MODAL: CADASTRAR / EDITAR PRODUTO ---------- -->
+<div class="modal-overlay" id="modalProduto" hidden aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="tituloModalProduto">Novo produto</h3>
+      <button class="modal-close" data-close><span class="ico" data-ico="close"></span></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label>Código de barras <span class="req">*</span><input class="input" id="produtoCodigoBarras" inputmode="numeric" autocomplete="off" placeholder="Leia ou digite o código" /></label>
+        <label>Nome <span class="req">*</span><input class="input" id="produtoNome" autocomplete="off" placeholder="Ex: Arroz 5 kg" /></label>
+        <label>Preço de venda <span class="req">*</span><div class="money-input"><span>R$</span><input class="input" id="produtoPreco" inputmode="decimal" placeholder="0,00" /></div></label>
+        <label>Categoria<select class="select" id="produtoCategoria"><option value="">Sem categoria</option></select></label>
+        <label class="form-span-2">Descrição<input class="input" id="produtoDescricao" placeholder="Opcional" /></label>
+        <label class="switch-row form-span-2"><span>Produto ativo</span><label class="switch"><input type="checkbox" id="produtoAtivo" checked><span class="slider"></span></label></label>
+      </div>
+      <button class="btn btn-primary btn-block" id="btnSalvarProduto">Salvar produto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- MODAL: ESCANEAR CÓDIGO DE BARRAS ---------- -->
+<div class="modal-overlay" id="modalScanner" hidden aria-hidden="true">
+  <div class="modal modal-scanner">
+    <div class="modal-head">
+      <h3>Escanear produto</h3>
+      <button class="modal-close" id="btnFecharScanner" type="button"><span class="ico" data-ico="close"></span></button>
+    </div>
+    <div class="modal-body">
+      <div class="scanner-frame">
+        <video id="scannerVideo" playsinline muted></video>
+        <div class="scanner-guide" aria-hidden="true"></div>
+      </div>
+      <p class="muted scanner-message" id="scannerMensagem">Aponte a câmera para o código de barras do produto.</p>
+      <div class="divider-or"><span>ou digite o código</span></div>
+      <div class="scanner-manual-row">
+        <input class="input" id="scannerCodigoManual" inputmode="numeric" autocomplete="off" placeholder="Código de barras" />
+        <button class="btn btn-secondary" id="btnBuscarCodigoManual" type="button">Buscar</button>
+      </div>
+      <div class="scanner-result" id="scannerResultado" hidden></div>
+      <button class="btn btn-primary btn-block" id="btnConfirmarProdutoEscaneado" type="button" hidden>Adicionar à conta</button>
     </div>
   </div>
 </div>

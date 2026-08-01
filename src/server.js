@@ -190,6 +190,7 @@ const origensPermitidas = [
   "http://localhost:5500",
   "http://127.0.0.1:5500",
   "http://localhost:3000",
+  "http://192.168.15.2:5500",
 ].filter(Boolean);
 
 app.use(
@@ -3844,6 +3845,452 @@ app.get(
 // PARTE 3
 // COMPRAS / ITENS DA CONTA
 // ============================================================================
+
+
+
+
+// ============================================================================
+// PRODUTOS — SCHEMAS E ROTAS
+// ============================================================================
+
+const schemaProdutoBase = z.object({
+  categoria_id: z.coerce.number().int().positive().nullable().optional(),
+  codigo_barras: z.string().trim().min(4, "Informe um código de barras válido.").max(64),
+  nome: z.string().trim().min(2, "O nome deve possuir pelo menos 2 caracteres.").max(150),
+  descricao: z.string().trim().max(500).optional().or(z.literal("")),
+  preco_venda: z.coerce.number().positive("O preço deve ser maior que zero."),
+  ativo: z.boolean().optional(),
+});
+
+const schemaCriarProduto = schemaProdutoBase;
+
+const schemaAtualizarProduto = schemaProdutoBase
+  .partial()
+  .refine((dados) => Object.keys(dados).length > 0, {
+    mensagem: "Informe pelo menos um campo para atualizar.",
+  });
+
+function normalizarCodigoBarras(codigo) {
+  return String(codigo ?? "").trim().replace(/\s+/g, "");
+}
+
+app.get(
+  "/api/categorias-produtos",
+  autenticar,
+  async (request, response, next) => {
+    try {
+      const resultado = await pool.query(`
+        SELECT id, nome, descricao, ativo
+        FROM categorias_produtos
+        WHERE ativo = TRUE
+        ORDER BY nome ASC
+      `);
+
+      return respostaSucesso(response, {
+        mensagem: "Categorias carregadas com sucesso.",
+        dados: { categorias: resultado.rows },
+      });
+    } catch (erro) {
+      return next(erro);
+    }
+  },
+);
+
+app.get(
+  "/api/produtos",
+  autenticar,
+  somenteAdministrador,
+  async (request, response, next) => {
+    try {
+      const { pagina, limite, offset } = obterPaginacao(request.query);
+      const pesquisa = normalizarTexto(request.query.pesquisa || "");
+      const ativo = request.query.ativo;
+      const parametros = [];
+      const condicoes = [];
+
+      if (pesquisa) {
+        parametros.push(`%${pesquisa}%`);
+        condicoes.push(`(
+          p.nome ILIKE $${parametros.length}
+          OR p.codigo_barras ILIKE $${parametros.length}
+          OR COALESCE(cp.nome, '') ILIKE $${parametros.length}
+        )`);
+      }
+
+      if (ativo === "true" || ativo === "false") {
+        parametros.push(ativo === "true");
+        condicoes.push(`p.ativo = $${parametros.length}`);
+      }
+
+      const where = condicoes.length ? `WHERE ${condicoes.join(" AND ")}` : "";
+      const totalResultado = await pool.query(
+        `SELECT COUNT(*)::INTEGER AS total FROM produtos p LEFT JOIN categorias_produtos cp ON cp.id = p.categoria_id ${where}`,
+        parametros,
+      );
+      const parametrosLista = [...parametros, limite, offset];
+      const resultado = await pool.query(
+        `
+          SELECT
+            p.id,
+            p.categoria_id,
+            cp.nome AS categoria_nome,
+            p.codigo_barras,
+            p.nome,
+            p.descricao,
+            p.preco_venda,
+            p.ativo,
+            p.criado_por,
+            u.nome AS criado_por_nome,
+            p.criado_em,
+            p.atualizado_em
+          FROM produtos p
+          LEFT JOIN categorias_produtos cp ON cp.id = p.categoria_id
+          LEFT JOIN usuarios u ON u.id = p.criado_por
+          ${where}
+          ORDER BY p.nome ASC
+          LIMIT $${parametros.length + 1}
+          OFFSET $${parametros.length + 2}
+        `,
+        parametrosLista,
+      );
+      const total = totalResultado.rows[0].total;
+
+      return respostaSucesso(response, {
+        mensagem: "Produtos carregados com sucesso.",
+        dados: { produtos: resultado.rows },
+        meta: {
+          pagina,
+          limite,
+          total_registros: total,
+          total_paginas: calcularTotalPaginas(total, limite),
+        },
+      });
+    } catch (erro) {
+      return next(erro);
+    }
+  },
+);
+
+app.get(
+  "/api/produtos/codigo/:codigo",
+  autenticar,
+  async (request, response, next) => {
+    try {
+      const codigo = normalizarCodigoBarras(request.params.codigo);
+      const resultado = await pool.query(
+        `
+          SELECT
+            p.id,
+            p.categoria_id,
+            cp.nome AS categoria_nome,
+            p.codigo_barras,
+            p.nome,
+            p.descricao,
+            p.preco_venda,
+            p.ativo
+          FROM produtos p
+          LEFT JOIN categorias_produtos cp ON cp.id = p.categoria_id
+          WHERE p.codigo_barras = $1
+            AND p.ativo = TRUE
+          LIMIT 1
+        `,
+        [codigo],
+      );
+
+      if (resultado.rowCount === 0) {
+        throw criarErro("Produto não encontrado para este código de barras.", 404, "PRODUTO_NAO_ENCONTRADO", { codigo_barras: codigo });
+      }
+
+      return respostaSucesso(response, {
+        mensagem: "Produto encontrado com sucesso.",
+        dados: { produto: resultado.rows[0] },
+      });
+    } catch (erro) {
+      return next(erro);
+    }
+  },
+);
+
+app.post(
+  "/api/produtos",
+  autenticar,
+  somenteAdministrador,
+  async (request, response, next) => {
+    try {
+      const dados = validarDados(schemaCriarProduto, request.body);
+      const codigo = normalizarCodigoBarras(dados.codigo_barras);
+      const resultado = await pool.query(
+        `
+          INSERT INTO produtos (
+            categoria_id, codigo_barras, nome, descricao,
+            preco_venda, ativo, criado_por
+          )
+          VALUES ($1, $2, $3, $4, $5, COALESCE($6, TRUE), $7)
+          RETURNING *
+        `,
+        [
+          dados.categoria_id ?? null,
+          codigo,
+          normalizarTexto(dados.nome),
+          dados.descricao?.trim() || null,
+          dados.preco_venda,
+          dados.ativo,
+          request.usuario.id,
+        ],
+      );
+
+      const produto = resultado.rows[0];
+      await registrarHistorico({
+        usuarioId: request.usuario.id,
+        acao: "CRIACAO",
+        entidade: "produtos",
+        entidadeId: produto.id,
+        descricao: `Produto ${produto.nome} cadastrado.`,
+        dadosNovos: produto,
+        enderecoIp: request.ip,
+      });
+
+      return respostaSucesso(response, {
+        status: 201,
+        mensagem: "Produto cadastrado com sucesso.",
+        dados: { produto },
+      });
+    } catch (erro) {
+      if (erro.code === "23505") {
+        return next(criarErro("Já existe um produto com este código de barras.", 409, "CODIGO_BARRAS_DUPLICADO"));
+      }
+      return next(erro);
+    }
+  },
+);
+
+app.patch(
+  "/api/produtos/:id",
+  autenticar,
+  somenteAdministrador,
+  async (request, response, next) => {
+    const clienteBanco = await pool.connect();
+    try {
+      const produtoId = validarId(request.params.id, "id do produto");
+      const dados = validarDados(schemaAtualizarProduto, request.body);
+      await clienteBanco.query("BEGIN");
+
+      const atualResultado = await clienteBanco.query(
+        `SELECT * FROM produtos WHERE id = $1 FOR UPDATE`,
+        [produtoId],
+      );
+      if (atualResultado.rowCount === 0) {
+        throw criarErro("Produto não encontrado.", 404, "PRODUTO_NAO_ENCONTRADO");
+      }
+      const anterior = atualResultado.rows[0];
+      const codigo = dados.codigo_barras !== undefined
+        ? normalizarCodigoBarras(dados.codigo_barras)
+        : anterior.codigo_barras;
+
+      const resultado = await clienteBanco.query(
+        `
+          UPDATE produtos
+          SET
+            categoria_id = $1,
+            codigo_barras = $2,
+            nome = $3,
+            descricao = $4,
+            preco_venda = $5,
+            ativo = $6,
+            atualizado_em = NOW()
+          WHERE id = $7
+          RETURNING *
+        `,
+        [
+          dados.categoria_id !== undefined ? dados.categoria_id : anterior.categoria_id,
+          codigo,
+          dados.nome !== undefined ? normalizarTexto(dados.nome) : anterior.nome,
+          dados.descricao !== undefined ? (dados.descricao.trim() || null) : anterior.descricao,
+          dados.preco_venda !== undefined ? dados.preco_venda : anterior.preco_venda,
+          dados.ativo !== undefined ? dados.ativo : anterior.ativo,
+          produtoId,
+        ],
+      );
+      const atualizado = resultado.rows[0];
+
+      if (Number(anterior.preco_venda) !== Number(atualizado.preco_venda)) {
+        await clienteBanco.query(
+          `
+            INSERT INTO historico_precos (
+              produto_id, preco_anterior, preco_novo, alterado_por
+            )
+            VALUES ($1, $2, $3, $4)
+          `,
+          [produtoId, anterior.preco_venda, atualizado.preco_venda, request.usuario.id],
+        );
+      }
+
+      await registrarHistorico({
+        usuarioId: request.usuario.id,
+        acao: "EDICAO",
+        entidade: "produtos",
+        entidadeId: produtoId,
+        descricao: `Produto ${atualizado.nome} atualizado.`,
+        dadosAnteriores: anterior,
+        dadosNovos: atualizado,
+        enderecoIp: request.ip,
+        clienteBanco,
+      });
+      await clienteBanco.query("COMMIT");
+
+      return respostaSucesso(response, {
+        mensagem: "Produto atualizado com sucesso.",
+        dados: { produto: atualizado },
+      });
+    } catch (erro) {
+      await clienteBanco.query("ROLLBACK");
+      if (erro.code === "23505") {
+        return next(criarErro("Já existe um produto com este código de barras.", 409, "CODIGO_BARRAS_DUPLICADO"));
+      }
+      return next(erro);
+    } finally {
+      clienteBanco.release();
+    }
+  },
+);
+
+app.get(
+  "/api/produtos/:id",
+  autenticar,
+  somenteAdministrador,
+  async (request, response, next) => {
+    try {
+      const produtoId = validarId(request.params.id, "id do produto");
+      const resultado = await pool.query(
+        `
+          SELECT
+            p.id,
+            p.categoria_id,
+            cp.nome AS categoria_nome,
+            p.codigo_barras,
+            p.nome,
+            p.descricao,
+            p.preco_venda,
+            p.ativo,
+            p.criado_por,
+            p.criado_em,
+            p.atualizado_em
+          FROM produtos p
+          LEFT JOIN categorias_produtos cp ON cp.id = p.categoria_id
+          WHERE p.id = $1
+          LIMIT 1
+        `,
+        [produtoId],
+      );
+      if (resultado.rowCount === 0) {
+        throw criarErro("Produto não encontrado.", 404, "PRODUTO_NAO_ENCONTRADO");
+      }
+      return respostaSucesso(response, {
+        mensagem: "Produto carregado com sucesso.",
+        dados: { produto: resultado.rows[0] },
+      });
+    } catch (erro) {
+      return next(erro);
+    }
+  },
+);
+
+app.get(
+  "/api/produtos/:id/historico-precos",
+  autenticar,
+  somenteAdministrador,
+  async (request, response, next) => {
+    try {
+      const produtoId = validarId(request.params.id, "id do produto");
+      const resultado = await pool.query(
+        `
+          SELECT hp.id, hp.preco_anterior, hp.preco_novo, hp.alterado_em,
+                 u.nome AS alterado_por_nome
+          FROM historico_precos hp
+          LEFT JOIN usuarios u ON u.id = hp.alterado_por
+          WHERE hp.produto_id = $1
+          ORDER BY hp.alterado_em DESC
+          LIMIT 50
+        `,
+        [produtoId],
+      );
+      return respostaSucesso(response, {
+        mensagem: "Histórico de preços carregado.",
+        dados: { historico: resultado.rows },
+      });
+    } catch (erro) {
+      return next(erro);
+    }
+  },
+);
+
+app.post(
+  "/api/contas/:contaId/compras/produto",
+  autenticar,
+  async (request, response, next) => {
+    const clienteBanco = await pool.connect();
+    try {
+      const contaId = validarId(request.params.contaId, "id da conta");
+      const codigo = normalizarCodigoBarras(request.body?.codigo_barras);
+      if (!codigo) {
+        throw criarErro("Informe o código de barras.", 422, "CODIGO_BARRAS_OBRIGATORIO");
+      }
+
+      await clienteBanco.query("BEGIN");
+      await fecharContasVencidas(clienteBanco, request.usuario.id);
+      const conta = await buscarContaParaMovimentacao(clienteBanco, contaId);
+      validarContaAbertaParaCompra(conta);
+
+      const produtoResultado = await clienteBanco.query(
+        `SELECT id, nome, preco_venda, codigo_barras, ativo FROM produtos WHERE codigo_barras = $1 LIMIT 1 FOR UPDATE`,
+        [codigo],
+      );
+      if (produtoResultado.rowCount === 0 || !produtoResultado.rows[0].ativo) {
+        throw criarErro("Produto não cadastrado ou desativado.", 404, "PRODUTO_NAO_ENCONTRADO", { codigo_barras: codigo });
+      }
+      const produto = produtoResultado.rows[0];
+
+      const resultado = await clienteBanco.query(
+        `
+          INSERT INTO itens_conta (
+            conta_id, produto_id, descricao, valor, observacao,
+            data_compra, registrado_por
+          )
+          VALUES ($1, $2, $3, $4, NULL, NOW(), $5)
+          RETURNING id, conta_id, produto_id, descricao, valor,
+                    observacao, data_compra, registrado_por,
+                    criado_em, atualizado_em
+        `,
+        [contaId, produto.id, produto.nome, produto.preco_venda, request.usuario.id],
+      );
+      const compra = resultado.rows[0];
+      const resumoConta = await obterResumoConta(clienteBanco, contaId);
+
+      await registrarHistorico({
+        usuarioId: request.usuario.id,
+        acao: "CRIACAO",
+        entidade: "itens_conta",
+        entidadeId: compra.id,
+        descricao: `Produto ${produto.nome} registrado por código de barras na conta de ${conta.cliente_nome}.`,
+        dadosNovos: compra,
+        enderecoIp: request.ip,
+        clienteBanco,
+      });
+      await clienteBanco.query("COMMIT");
+
+      return respostaSucesso(response, {
+        status: 201,
+        mensagem: "Produto registrado na conta com sucesso.",
+        dados: { produto, compra, conta: resumoConta },
+      });
+    } catch (erro) {
+      await clienteBanco.query("ROLLBACK");
+      return next(erro);
+    } finally {
+      clienteBanco.release();
+    }
+  },
+);
 
 
 // ============================================================================

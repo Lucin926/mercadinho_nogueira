@@ -109,6 +109,14 @@ card: `
     <path d="M6 15h4"/>
   </svg>
 `
+,
+barcode: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 5v14M7 5v14M10 5v14M14 5v14M17 5v14M21 5v14"/>
+    <path d="M5 5v14M12 5v14M19 5v14" stroke-width=".8"/>
+  </svg>
+`
 };
 
 function paintIcons(root = document) {
@@ -243,6 +251,16 @@ const state = {
     periodo: "mes_atual",
     ano: new Date().getFullYear(),
     mes: new Date().getMonth() + 1,
+  },
+
+  produtos: {
+    pesquisa: "",
+    ativo: "true",
+    pagina: 1,
+    limite: 20,
+    totalPaginas: 1,
+    editando: null,
+    escaneado: null,
   },
 };
 
@@ -1058,6 +1076,11 @@ const TITULOS_PAGINAS = {
     subtitulo: "Desempenho financeiro da loja",
   },
 
+  produtos: {
+    titulo: "Produtos",
+    subtitulo: "Cadastro, preços e códigos de barras",
+  },
+
   configuracoes: {
     titulo: "Configurações",
     subtitulo: "Preferências da loja e do sistema",
@@ -1188,6 +1211,17 @@ async function irParaPagina(nomePagina) {
         "function"
     ) {
       await carregarRelatorios();
+    }
+
+    if (
+      nomePagina === "produtos" &&
+      typeof carregarProdutos === "function"
+    ) {
+      if (state.usuario?.perfil !== "ADMINISTRADOR") {
+        mostrarToast("Somente administradores podem acessar produtos.", "close");
+        return irParaPagina("inicio");
+      }
+      await carregarProdutos();
     }
 
     if (
@@ -5371,6 +5405,292 @@ function renderizarRankingClientes(
       .join("");
 }
 
+
+
+// ============================================================================
+// PARTE 11 — PRODUTOS E LEITURA DE CÓDIGO DE BARRAS
+// ============================================================================
+
+function atualizarVisibilidadeAdministrativa() {
+  const administrador = state.usuario?.perfil === "ADMINISTRADOR";
+  elementos(".admin-only").forEach((item) => {
+    item.hidden = !administrador;
+  });
+}
+
+async function carregarCategoriasProdutos() {
+  const resultado = await api("/categorias-produtos");
+  const seletor = elemento("produtoCategoria");
+  if (!seletor) return;
+  const valorAtual = seletor.value;
+  seletor.innerHTML = `<option value="">Sem categoria</option>` +
+    resultado.dados.categorias.map((categoria) =>
+      `<option value="${categoria.id}">${escaparHtml(categoria.nome)}</option>`
+    ).join("");
+  seletor.value = valorAtual;
+}
+
+async function carregarProdutos() {
+  if (state.usuario?.perfil !== "ADMINISTRADOR") return;
+  const parametros = new URLSearchParams({
+    pagina: String(state.produtos.pagina),
+    limite: String(state.produtos.limite),
+  });
+  if (state.produtos.pesquisa) parametros.set("pesquisa", state.produtos.pesquisa);
+  if (state.produtos.ativo !== "") parametros.set("ativo", state.produtos.ativo);
+
+  const resultado = await api(`/produtos?${parametros.toString()}`);
+  const produtos = resultado.dados.produtos || [];
+  const meta = resultado.meta || {};
+  state.produtos.totalPaginas = meta.total_paginas || 1;
+  renderizarProdutos(produtos);
+  atualizarPaginacaoProdutos(meta);
+}
+
+function renderizarProdutos(produtos) {
+  const tbody = elemento("tableProdutosBody");
+  const mobile = elemento("cardsProdutosMobile");
+  const vazio = elemento("produtosEmpty");
+  if (vazio) vazio.hidden = produtos.length > 0;
+
+  const linha = (produto) => `
+    <tr>
+      <td><strong>${escaparHtml(produto.nome)}</strong></td>
+      <td><code>${escaparHtml(produto.codigo_barras)}</code></td>
+      <td>${escaparHtml(produto.categoria_nome || "Sem categoria")}</td>
+      <td><strong>${formatarMoeda(produto.preco_venda)}</strong></td>
+      <td><span class="badge ${produto.ativo ? "badge-success" : "badge-muted"}">${produto.ativo ? "Ativo" : "Desativado"}</span></td>
+      <td><button class="btn btn-secondary btn-sm" data-edit-product="${produto.id}"><span class="ico" data-ico="edit"></span> Editar</button></td>
+    </tr>`;
+
+  const card = (produto) => `
+    <article class="product-card">
+      <div class="product-card-head"><strong>${escaparHtml(produto.nome)}</strong><span class="badge ${produto.ativo ? "badge-success" : "badge-muted"}">${produto.ativo ? "Ativo" : "Desativado"}</span></div>
+      <div class="product-code">${escaparHtml(produto.codigo_barras)}</div>
+      <div class="product-card-meta"><span>${escaparHtml(produto.categoria_nome || "Sem categoria")}</span><strong>${formatarMoeda(produto.preco_venda)}</strong></div>
+      <button class="btn btn-secondary btn-block" data-edit-product="${produto.id}"><span class="ico" data-ico="edit"></span> Editar produto</button>
+    </article>`;
+
+  if (tbody) tbody.innerHTML = produtos.map(linha).join("");
+  if (mobile) mobile.innerHTML = produtos.map(card).join("");
+  conectarBotoesEditarProduto(document);
+  paintIcons(document);
+}
+
+function atualizarPaginacaoProdutos(meta) {
+  const container = elemento("produtosPaginacao");
+  if (!container) return;
+  const totalPaginas = meta.total_paginas || 1;
+  container.hidden = (meta.total_registros || 0) <= state.produtos.limite;
+  definirTexto("produtosPaginaInfo", `Página ${meta.pagina || 1} de ${totalPaginas}`);
+  definirDesabilitado("btnProdutosAnterior", (meta.pagina || 1) <= 1);
+  definirDesabilitado("btnProdutosProximo", (meta.pagina || 1) >= totalPaginas);
+}
+
+async function abrirModalProduto(produtoId = null) {
+  state.produtos.editando = null;
+  await carregarCategoriasProdutos();
+  const modal = elemento("modalProduto");
+  definirTexto("tituloModalProduto", produtoId ? "Editar produto" : "Novo produto");
+  elemento("produtoCodigoBarras").value = "";
+  elemento("produtoNome").value = "";
+  elemento("produtoPreco").value = "";
+  elemento("produtoCategoria").value = "";
+  elemento("produtoDescricao").value = "";
+  elemento("produtoAtivo").checked = true;
+
+  if (produtoId) {
+    const resultado = await api(`/produtos/${produtoId}`);
+    const produto = resultado.dados.produto;
+    if (!produto) throw new Error("Produto não encontrado.");
+    state.produtos.editando = produto;
+    elemento("produtoCodigoBarras").value = produto.codigo_barras || "";
+    elemento("produtoNome").value = produto.nome || "";
+    elemento("produtoPreco").value = Number(produto.preco_venda).toFixed(2).replace(".", ",");
+    elemento("produtoCategoria").value = produto.categoria_id || "";
+    elemento("produtoDescricao").value = produto.descricao || "";
+    elemento("produtoAtivo").checked = Boolean(produto.ativo);
+  }
+  abrirModal(modal);
+}
+
+function conectarBotoesEditarProduto(raiz) {
+  elementos("[data-edit-product]", raiz).forEach((botao) => {
+    botao.onclick = () => abrirModalProduto(botao.dataset.editProduct).catch((erro) => mostrarToast(erro.message, "close"));
+  });
+}
+
+let salvandoProduto = false;
+const botaoSalvarProduto = elemento("btnSalvarProduto");
+if (botaoSalvarProduto) {
+  botaoSalvarProduto.onclick = async () => {
+    if (salvandoProduto) return;
+    const codigo_barras = elemento("produtoCodigoBarras")?.value.trim();
+    const nome = elemento("produtoNome")?.value.trim();
+    const preco_venda = converterValorInput(elemento("produtoPreco")?.value);
+    const categoriaValor = elemento("produtoCategoria")?.value;
+    const descricao = elemento("produtoDescricao")?.value.trim() || "";
+    const ativo = Boolean(elemento("produtoAtivo")?.checked);
+    if (!codigo_barras || !nome || !Number.isFinite(preco_venda) || preco_venda <= 0) {
+      mostrarToast("Preencha código, nome e preço corretamente.", "close");
+      return;
+    }
+    salvandoProduto = true;
+    definirCarregamentoBotao(botaoSalvarProduto, true, "Salvando...");
+    try {
+      const corpo = {
+        codigo_barras, nome, preco_venda, descricao, ativo,
+        categoria_id: categoriaValor ? Number(categoriaValor) : null,
+      };
+      if (state.produtos.editando) {
+        await api(`/produtos/${state.produtos.editando.id}`, { method: "PATCH", body: JSON.stringify(corpo) });
+        mostrarToast("Produto atualizado com sucesso.");
+      } else {
+        await api("/produtos", { method: "POST", body: JSON.stringify(corpo) });
+        mostrarToast("Produto cadastrado com sucesso.");
+      }
+      fecharModal(elemento("modalProduto"));
+      await carregarProdutos();
+    } catch (erro) {
+      mostrarToast(erro.message || "Não foi possível salvar o produto.", "close");
+    } finally {
+      salvandoProduto = false;
+      definirCarregamentoBotao(botaoSalvarProduto, false);
+    }
+  };
+}
+
+let scannerStream = null;
+let scannerTimer = null;
+let produtoEscaneado = null;
+let codigoEmProcessamento = false;
+
+async function buscarProdutoPorCodigo(codigo) {
+  if (codigoEmProcessamento) return;
+  codigoEmProcessamento = true;
+  try {
+    const resultado = await api(`/produtos/codigo/${encodeURIComponent(codigo)}`);
+    produtoEscaneado = resultado.dados.produto;
+    state.produtos.escaneado = produtoEscaneado;
+    const caixa = elemento("scannerResultado");
+    caixa.hidden = false;
+    caixa.innerHTML = `<strong>${escaparHtml(produtoEscaneado.nome)}</strong><span>${formatarMoeda(produtoEscaneado.preco_venda)}</span><small>Código: ${escaparHtml(produtoEscaneado.codigo_barras)}</small>`;
+    elemento("btnConfirmarProdutoEscaneado").hidden = false;
+    definirTexto("scannerMensagem", "Produto encontrado. Confirme para adicionar à conta.");
+    pararScanner();
+  } catch (erro) {
+    produtoEscaneado = null;
+    elemento("btnConfirmarProdutoEscaneado").hidden = true;
+    definirTexto("scannerMensagem", erro.message || "Produto não encontrado.");
+  } finally {
+    window.setTimeout(() => { codigoEmProcessamento = false; }, 800);
+  }
+}
+
+async function iniciarScanner() {
+  const modal = elemento("modalScanner");
+  produtoEscaneado = null;
+  elemento("scannerResultado").hidden = true;
+  elemento("btnConfirmarProdutoEscaneado").hidden = true;
+  elemento("scannerCodigoManual").value = "";
+  definirTexto("scannerMensagem", "Aponte a câmera para o código de barras do produto.");
+  abrirModal(modal);
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    definirTexto("scannerMensagem", "Este navegador não permite acesso à câmera. Digite o código abaixo.");
+    return;
+  }
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    const video = elemento("scannerVideo");
+    video.srcObject = scannerStream;
+    await video.play();
+
+    if (!("BarcodeDetector" in window)) {
+      definirTexto("scannerMensagem", "A câmera abriu, mas a leitura automática não é suportada neste navegador. Digite o código abaixo.");
+      return;
+    }
+    const detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"] });
+    scannerTimer = window.setInterval(async () => {
+      if (!video.videoWidth || codigoEmProcessamento) return;
+      try {
+        const codigos = await detector.detect(video);
+        if (codigos[0]?.rawValue) await buscarProdutoPorCodigo(codigos[0].rawValue);
+      } catch (erro) {
+        console.error("Falha na leitura do código:", erro);
+      }
+    }, 600);
+  } catch (erro) {
+    definirTexto("scannerMensagem", "Não foi possível abrir a câmera. Autorize o acesso ou digite o código abaixo.");
+  }
+}
+
+function pararScanner() {
+  if (scannerTimer) window.clearInterval(scannerTimer);
+  scannerTimer = null;
+  if (scannerStream) scannerStream.getTracks().forEach((track) => track.stop());
+  scannerStream = null;
+  const video = elemento("scannerVideo");
+  if (video) video.srcObject = null;
+}
+
+const btnEscanear = elemento("btnEscanearProduto");
+if (btnEscanear) btnEscanear.onclick = iniciarScanner;
+const btnFecharScanner = elemento("btnFecharScanner");
+if (btnFecharScanner) btnFecharScanner.onclick = () => { pararScanner(); fecharModal(elemento("modalScanner")); };
+const btnBuscarCodigo = elemento("btnBuscarCodigoManual");
+if (btnBuscarCodigo) btnBuscarCodigo.onclick = () => {
+  const codigo = elemento("scannerCodigoManual")?.value.trim();
+  if (!codigo) return mostrarToast("Digite o código de barras.", "close");
+  buscarProdutoPorCodigo(codigo);
+};
+const btnConfirmarEscaneado = elemento("btnConfirmarProdutoEscaneado");
+if (btnConfirmarEscaneado) btnConfirmarEscaneado.onclick = async () => {
+  const contaId = modalCompra?.dataset.contaId;
+  if (!contaId || !produtoEscaneado) return;
+  definirCarregamentoBotao(btnConfirmarEscaneado, true, "Adicionando...");
+  try {
+    await api(`/contas/${contaId}/compras/produto`, {
+      method: "POST",
+      body: JSON.stringify({ codigo_barras: produtoEscaneado.codigo_barras }),
+    });
+    pararScanner();
+    fecharModal(elemento("modalScanner"));
+    fecharModal(modalCompra);
+    mostrarToast("Produto adicionado à conta com sucesso.");
+    await Promise.allSettled([carregarContas(), carregarDashboard()]);
+    await abrirDetalhesConta(contaId);
+  } catch (erro) {
+    mostrarToast(erro.message || "Não foi possível adicionar o produto.", "close");
+  } finally {
+    definirCarregamentoBotao(btnConfirmarEscaneado, false);
+  }
+};
+
+const btnNovoProduto = elemento("btnNovoProduto");
+if (btnNovoProduto) btnNovoProduto.onclick = () => abrirModalProduto().catch((erro) => mostrarToast(erro.message, "close"));
+const searchProdutos = elemento("searchProdutos");
+if (searchProdutos) searchProdutos.addEventListener("input", debounce(async (evento) => {
+  state.produtos.pesquisa = evento.target.value.trim();
+  state.produtos.pagina = 1;
+  await carregarProdutos();
+}, 350));
+const filtroProdutos = elemento("filterProdutosAtivos");
+if (filtroProdutos) filtroProdutos.onchange = async (evento) => {
+  state.produtos.ativo = evento.target.value;
+  state.produtos.pagina = 1;
+  await carregarProdutos();
+};
+const btnProdutosAnterior = elemento("btnProdutosAnterior");
+if (btnProdutosAnterior) btnProdutosAnterior.onclick = async () => {
+  if (state.produtos.pagina > 1) { state.produtos.pagina -= 1; await carregarProdutos(); }
+};
+const btnProdutosProximo = elemento("btnProdutosProximo");
+if (btnProdutosProximo) btnProdutosProximo.onclick = async () => {
+  if (state.produtos.pagina < state.produtos.totalPaginas) { state.produtos.pagina += 1; await carregarProdutos(); }
+};
+
+
 // ============================================================================
 // PARTE 10
 // CONFIGURAÇÕES DA LOJA, PERFIL E INICIALIZAÇÃO FINAL
@@ -5736,6 +6056,10 @@ document.addEventListener(
       ) {
         await carregarRelatorios();
       }
+
+      if (state.paginaAtual === "produtos" && state.usuario?.perfil === "ADMINISTRADOR") {
+        await carregarProdutos();
+      }
     } catch (erro) {
       console.error(
         "Não foi possível atualizar a página:",
@@ -5803,6 +6127,8 @@ async function iniciarAplicacao() {
     await carregarUsuarioAtual();
 
     atualizarPerfilVisual();
+
+    atualizarVisibilidadeAdministrativa();
 
     carregarPerfil();
 
