@@ -62,35 +62,68 @@ for (const variavel of variaveisObrigatorias) {
 // CONEXÃO COM O POSTGRESQL
 // ============================================================================
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+const configuracaoBanco = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
 
-  max: 15,
+      max: 15,
 
-  idleTimeoutMillis: 30000,
+      idleTimeoutMillis: 30000,
 
-  connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 10000,
 
-  ssl:
-    process.env.DB_SSL === "true"
-      ? {
-          rejectUnauthorized: false,
-        }
-      : false,
-});
+      ssl: {
+        rejectUnauthorized: false,
+      },
+
+      /*
+        Executado depois que cada conexão com o Neon já estiver aberta.
+        Evita o erro "unsupported startup parameter".
+      */
+      onConnect: async (cliente) => {
+        await cliente.query(
+          "SET search_path TO public",
+        );
+      },
+    }
+  : {
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+
+      max: 15,
+
+      idleTimeoutMillis: 30000,
+
+      connectionTimeoutMillis: 5000,
+
+      ssl:
+        process.env.DB_SSL === "true"
+          ? {
+              rejectUnauthorized: false,
+            }
+          : false,
+    };
+
+const pool = new Pool(
+  configuracaoBanco,
+);
 
 pool.on("connect", () => {
   if (NODE_ENV === "development") {
-    console.log("🟢 Uma conexão foi aberta com o PostgreSQL.");
+    console.log(
+      "🟢 Uma conexão foi aberta com o PostgreSQL.",
+    );
   }
 });
 
 pool.on("error", (erro) => {
-  console.error("🔴 Erro inesperado no pool do PostgreSQL:");
+  console.error(
+    "🔴 Erro inesperado no pool do PostgreSQL:",
+  );
+
   console.error(erro);
 });
 

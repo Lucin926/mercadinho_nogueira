@@ -1,4 +1,36 @@
 // ============================================================================
+// ÍCONES E PINTURA DOS ÍCONES
+// ============================================================================
+
+const ICONS = {
+  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg>`,
+  wallet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5h14a2 2 0 0 1 2 2V19H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"/><path d="M16 12h4v4h-4a2 2 0 0 1 0-4Z"/></svg>`,
+  history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>`,
+  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>`,
+  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+  file: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6Z"/><path d="M14 2v5h5"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.2M8.7 13.3l6.6 4.2"/></svg>`,
+  logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg>`,
+  more: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`,
+  chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
+  chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
+};
+
+function paintIcons(root = document) {
+  root.querySelectorAll("[data-ico]").forEach((node) => {
+    const name = node.dataset.ico;
+    if (ICONS[name]) node.innerHTML = ICONS[name];
+  });
+}
+
+// ============================================================================
 // PARTE 1
 // CONFIGURAÇÃO DA API, ESTADO, AUTENTICAÇÃO E FUNÇÕES AUXILIARES
 // ============================================================================
@@ -8,7 +40,51 @@
 // CONFIGURAÇÃO DA API
 // ============================================================================
 
-const API_BASE_URL = "http://localhost:3000/api";
+/*
+  CONFIGURAÇÃO DA API
+
+  - No próprio computador: usa localhost.
+  - No celular, conectado ao mesmo Wi-Fi e abrindo o front pelo IP do
+    computador: usa automaticamente o mesmo IP na porta 3000.
+  - Quando o backend estiver hospedado na internet, coloque a URL pública
+    em URL_BACKEND_PRODUCAO, sem "/api" no final.
+
+  Exemplo:
+  const URL_BACKEND_PRODUCAO = "https://nogueira-api.onrender.com";
+*/
+const URL_BACKEND_PRODUCAO = "";
+
+const API_BASE_URL = (() => {
+  const protocolo = window.location.protocol;
+  const hostname = window.location.hostname;
+
+  const executandoNoComputador =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+
+  const executandoNaRedeLocal =
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+  if (executandoNoComputador) {
+    return "http://localhost:3000/api";
+  }
+
+  if (executandoNaRedeLocal) {
+    return `http://${hostname}:3000/api`;
+  }
+
+  if (URL_BACKEND_PRODUCAO.trim()) {
+    return `${URL_BACKEND_PRODUCAO.trim().replace(/\/+$/, "")}/api`;
+  }
+
+  /*
+    Esta opção só funciona quando frontend e backend estão publicados
+    no mesmo domínio, com as rotas da API disponíveis em "/api".
+  */
+  return `${protocolo}//${window.location.host}/api`;
+})();
 
 const TOKEN_KEY = "caderneta_token";
 const USER_KEY = "caderneta_usuario";
@@ -791,11 +867,18 @@ function abrirModal(modal) {
     return;
   }
 
-  modal.classList.add(
-    "is-open",
+  modal.hidden = false;
+  modal.removeAttribute("aria-hidden");
+  modal.classList.add("is-open");
+  paintIcons(modal);
+
+  const primeiroCampo = modal.querySelector(
+    "input:not([type='hidden']):not([disabled]), textarea:not([disabled]), select:not([disabled])",
   );
 
-  paintIcons(modal);
+  if (primeiroCampo) {
+    window.setTimeout(() => primeiroCampo.focus(), 50);
+  }
 }
 
 
@@ -804,9 +887,9 @@ function fecharModal(modal) {
     return;
   }
 
-  modal.classList.remove(
-    "is-open",
-  );
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  modal.hidden = true;
 }
 
 
@@ -1687,47 +1770,32 @@ function renderizarUltimasMovimentacoes(
 // A função abrirDetalhesConta será criada na parte de contas.
 // ============================================================================
 
-function conectarBotoesAbrirConta(
-  raiz,
-) {
-  elementos(
-    "[data-open-acc]",
-    raiz,
-  ).forEach(
-    (botao) => {
-      botao.addEventListener(
-        "click",
-        async () => {
-          const contaId =
-            botao.dataset.openAcc;
+function conectarBotoesAbrirConta(raiz) {
+  elementos("[data-open-acc]", raiz).forEach((botao) => {
+    botao.onclick = async () => {
+      const contaId = botao.dataset.openAcc;
 
-          if (
-            typeof abrirDetalhesConta !==
-            "function"
-          ) {
-            mostrarToast(
-              "A tela de detalhes da conta ainda não foi adicionada.",
-              "close",
-            );
+      if (!contaId || botao.dataset.loading === "true") {
+        return;
+      }
 
-            return;
-          }
+      botao.dataset.loading = "true";
+      botao.disabled = true;
 
-          try {
-            await abrirDetalhesConta(
-              contaId,
-            );
-          } catch (erro) {
-            mostrarToast(
-              erro.message ||
-                "Não foi possível abrir a conta.",
-              "close",
-            );
-          }
-        },
-      );
-    },
-  );
+      try {
+        await abrirDetalhesConta(contaId);
+      } catch (erro) {
+        console.error("Erro ao abrir conta:", erro);
+        mostrarToast(
+          erro.message || "Não foi possível abrir a conta.",
+          "close",
+        );
+      } finally {
+        delete botao.dataset.loading;
+        botao.disabled = false;
+      }
+    };
+  });
 }
 
 
@@ -2199,47 +2267,25 @@ function criarCardConta(conta) {
 // A função abrirModalCompra será criada na próxima parte.
 // ============================================================================
 
-function conectarBotoesAdicionarCompra(
-  raiz,
-) {
-  elementos(
-    "[data-add-compra]",
-    raiz,
-  ).forEach(
-    (botao) => {
-      botao.addEventListener(
-        "click",
-        async (evento) => {
-          evento.stopPropagation();
+function conectarBotoesAdicionarCompra(raiz) {
+  elementos("[data-add-compra]", raiz).forEach((botao) => {
+    botao.onclick = (evento) => {
+      evento.stopPropagation();
 
-          if (
-            botao.disabled
-          ) {
-            return;
-          }
+      if (botao.disabled) {
+        return;
+      }
 
-          const contaId =
-            botao.dataset.addCompra;
+      const contaId = botao.dataset.addCompra;
 
-          if (
-            typeof abrirModalCompra !==
-            "function"
-          ) {
-            mostrarToast(
-              "O formulário de compra ainda não foi adicionado.",
-              "close",
-            );
+      if (!contaId) {
+        mostrarToast("A conta não foi identificada.", "close");
+        return;
+      }
 
-            return;
-          }
-
-          abrirModalCompra(
-            contaId,
-          );
-        },
-      );
-    },
-  );
+      abrirModalCompra(contaId);
+    };
+  });
 }
 
 
@@ -2811,140 +2857,111 @@ function conectarBotoesExcluirCompra(
 
 let salvandoCompra = false;
 
-const botaoSalvarCompra =
-  elemento("btnSalvarCompra");
+const botaoSalvarCompra = elemento("btnSalvarCompra");
 
 if (botaoSalvarCompra) {
-  botaoSalvarCompra.addEventListener(
-    "click",
-    async () => {
-      // Impede dois ou mais envios simultâneos.
-      if (salvandoCompra) {
-        return;
+  botaoSalvarCompra.onclick = async () => {
+    if (salvandoCompra) {
+      return;
+    }
+
+    const descricao = elemento("compraDesc")?.value.trim();
+    const valor = converterValorInput(elemento("compraValor")?.value);
+    const observacao = elemento("compraObs")?.value.trim() || "";
+    const contaId = modalCompra?.dataset.contaId;
+
+    if (!descricao) {
+      mostrarToast("Informe o produto ou a descrição.", "close");
+      elemento("compraDesc")?.focus();
+      return;
+    }
+
+    if (!Number.isFinite(valor) || valor <= 0) {
+      mostrarToast("Informe um valor válido.", "close");
+      elemento("compraValor")?.focus();
+      return;
+    }
+
+    if (!contaId) {
+      mostrarToast("A conta da compra não foi identificada.", "close");
+      return;
+    }
+
+    salvandoCompra = true;
+    definirCarregamentoBotao(botaoSalvarCompra, true, "Salvando...");
+
+    try {
+      let mensagemSucesso;
+
+      if (state.compraEditando) {
+        await api(`/compras/${state.compraEditando.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            descricao,
+            valor,
+            observacao,
+          }),
+        });
+
+        mensagemSucesso = "Compra atualizada com sucesso.";
+      } else {
+        await api(`/contas/${contaId}/compras`, {
+          method: "POST",
+          body: JSON.stringify({
+            descricao,
+            valor,
+            observacao,
+          }),
+        });
+
+        mensagemSucesso = "Compra registrada com sucesso.";
       }
 
-      const descricao =
-        elemento("compraDesc")
-          ?.value.trim();
+      // O modal é fechado antes de qualquer atualização posterior da tela.
+      fecharModal(modalCompra);
 
-      const valor =
-        converterValorInput(
-          elemento("compraValor")
-            ?.value,
-        );
+      const campoDescricao = elemento("compraDesc");
+      const campoValor = elemento("compraValor");
+      const campoObservacao = elemento("compraObs");
 
-      const observacao =
-        elemento("compraObs")
-          ?.value.trim() || "";
+      if (campoDescricao) campoDescricao.value = "";
+      if (campoValor) campoValor.value = "";
+      if (campoObservacao) campoObservacao.value = "";
 
-      if (!descricao) {
-        mostrarToast(
-          "Informe o produto ou a descrição.",
-          "close",
-        );
+      state.compraEditando = null;
+      mostrarToast(mensagemSucesso);
 
-        return;
-      }
-
-      if (
-        !Number.isFinite(valor) ||
-        valor <= 0
-      ) {
-        mostrarToast(
-          "Informe um valor válido.",
-          "close",
-        );
-
-        return;
-      }
-
-      salvandoCompra = true;
-
-      definirCarregamentoBotao(
-        botaoSalvarCompra,
-        true,
-        "Salvando...",
-      );
+      // Atualizações independentes: uma falha não prende o modal nem repete a compra.
+      await Promise.allSettled([
+        typeof carregarContas === "function" ? carregarContas() : Promise.resolve(),
+        typeof carregarDashboard === "function" ? carregarDashboard() : Promise.resolve(),
+      ]);
 
       try {
-        const contaId =
-          modalCompra.dataset.contaId;
-
-        if (!contaId) {
-          throw new Error(
-            "A conta da compra não foi identificada.",
-          );
-        }
-
-        if (state.compraEditando) {
-          await api(
-            `/compras/${state.compraEditando.id}`,
-            {
-              method: "PATCH",
-
-              body: JSON.stringify({
-                descricao,
-                valor,
-                observacao,
-              }),
-            },
-          );
-
-          mostrarToast(
-            "Compra atualizada com sucesso.",
-          );
-        } else {
-          await api(
-            `/contas/${contaId}/compras`,
-            {
-              method: "POST",
-
-              body: JSON.stringify({
-                descricao,
-                valor,
-                observacao,
-              }),
-            },
-          );
-
-          mostrarToast(
-            "Compra registrada com sucesso.",
-          );
-        }
-
-        // Fecha o modal imediatamente após o cadastro.
-        fecharModal(modalCompra);
-
-        // Limpa os campos para evitar novo envio acidental.
-        elemento("compraDesc").value = "";
-        elemento("compraValor").value = "";
-        elemento("compraObs").value = "";
-
-        state.compraEditando = null;
-
-        // Atualiza os detalhes da conta.
         await abrirDetalhesConta(contaId);
-      } catch (erro) {
+      } catch (erroDetalhes) {
         console.error(
-          "Erro ao salvar compra:",
-          erro,
+          "Compra salva, mas os detalhes da conta não puderam ser atualizados:",
+          erroDetalhes,
         );
 
+        await irParaPagina("contas");
         mostrarToast(
-          erro.message ||
-            "Não foi possível salvar a compra.",
-          "close",
-        );
-      } finally {
-        salvandoCompra = false;
-
-        definirCarregamentoBotao(
-          botaoSalvarCompra,
-          false,
+          "Compra salva. A lista de contas foi atualizada.",
+          "check",
         );
       }
-    },
-  );
+    } catch (erro) {
+      console.error("Erro ao salvar compra:", erro);
+      mostrarToast(
+        erro.message || "Não foi possível salvar a compra.",
+        "close",
+      );
+    } finally {
+      salvandoCompra = false;
+      definirCarregamentoBotao(botaoSalvarCompra, false);
+    }
+  };
 }
 
 
@@ -5563,11 +5580,27 @@ document.addEventListener(
 
 
 // ============================================================================
+// NORMALIZAR MODAIS AO INICIAR
+// ============================================================================
+
+function normalizarModais() {
+  elementos(".modal-overlay").forEach((modal) => {
+    if (!modal.classList.contains("is-open")) {
+      modal.hidden = true;
+      modal.setAttribute("aria-hidden", "true");
+    }
+  });
+}
+
+
+// ============================================================================
 // INICIALIZAÇÃO COMPLETA DO SISTEMA
 // ============================================================================
 
 async function iniciarAplicacao() {
   validarEstruturaHtml();
+
+  normalizarModais();
 
   paintIcons();
 
@@ -5646,4 +5679,3 @@ document.addEventListener(
   "DOMContentLoaded",
   iniciarAplicacao,
 );
-
