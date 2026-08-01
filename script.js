@@ -52,7 +52,8 @@ function paintIcons(root = document) {
   Exemplo:
   const URL_BACKEND_PRODUCAO = "https://nogueira-api.onrender.com";
 */
-const URL_BACKEND_PRODUCAO = "";
+const URL_BACKEND_PRODUCAO =
+  "https://mercadinho-nogueira.onrender.com";
 
 const API_BASE_URL = (() => {
   const protocolo = window.location.protocol;
