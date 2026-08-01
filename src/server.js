@@ -38,25 +38,45 @@ let intervaloTarefasAutomaticas = null;
 // VALIDAÇÃO DAS VARIÁVEIS DE AMBIENTE
 // ============================================================================
 
-const variaveisObrigatorias = [
-  "DB_HOST",
-  "DB_PORT",
-  "DB_NAME",
-  "DB_USER",
-  "DB_PASSWORD",
+const variaveisComunsObrigatorias = [
   "JWT_SECRET",
 ];
 
-for (const variavel of variaveisObrigatorias) {
+for (const variavel of variaveisComunsObrigatorias) {
   if (!process.env[variavel]) {
     console.error(
-      `❌ A variável ${variavel} não foi definida no arquivo .env.`,
+      `❌ A variável ${variavel} não foi definida.`,
     );
 
     process.exit(1);
   }
 }
 
+/*
+  Se DATABASE_URL existir, o sistema usa o Neon/Render.
+
+  Se DATABASE_URL não existir, o sistema exige as variáveis
+  do PostgreSQL local.
+*/
+if (!process.env.DATABASE_URL) {
+  const variaveisBancoLocalObrigatorias = [
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PASSWORD",
+  ];
+
+  for (const variavel of variaveisBancoLocalObrigatorias) {
+    if (!process.env[variavel]) {
+      console.error(
+        `❌ A variável ${variavel} não foi definida para o banco local.`,
+      );
+
+      process.exit(1);
+    }
+  }
+}
 
 // ============================================================================
 // CONEXÃO COM O POSTGRESQL
