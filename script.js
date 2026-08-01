@@ -21,6 +21,94 @@ const ICONS = {
   more: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`,
   chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
   chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
+  calendar: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="16" rx="2"/>
+    <path d="M16 3v4M8 3v4M3 10h18"/>
+  </svg>
+`,
+
+users: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+`,
+
+hourglass: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 2h12M6 22h12"/>
+    <path d="M8 2v5a4 4 0 0 0 2 3.5L12 12l2-1.5A4 4 0 0 0 16 7V2"/>
+    <path d="M8 22v-5a4 4 0 0 1 2-3.5L12 12l2 1.5a4 4 0 0 1 2 3.5v5"/>
+  </svg>
+`,
+
+back: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 12H5"/>
+    <path d="m12 19-7-7 7-7"/>
+  </svg>
+`,
+
+lock: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="10" width="16" height="11" rx="2"/>
+    <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+  </svg>
+`,
+
+print: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 9V2h12v7"/>
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+    <rect x="6" y="14" width="12" height="8"/>
+  </svg>
+`,
+
+trend: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m3 17 6-6 4 4 8-8"/>
+    <path d="M15 7h6v6"/>
+  </svg>
+`,
+
+cash: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2"/>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M6 9H5a1 1 0 0 0-1 1v1"/>
+    <path d="M18 15h1a1 1 0 0 0 1-1v-1"/>
+  </svg>
+`,
+
+pix: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m12 3 4.5 4.5a3 3 0 0 0 4.2 0"/>
+    <path d="m12 21-4.5-4.5a3 3 0 0 0-4.2 0"/>
+    <path d="m3 12 4.5-4.5a3 3 0 0 1 4.2 0L16.2 12"/>
+    <path d="m21 12-4.5 4.5a3 3 0 0 1-4.2 0L7.8 12"/>
+  </svg>
+`,
+
+card: `
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2"/>
+    <path d="M2 10h20"/>
+    <path d="M6 15h4"/>
+  </svg>
+`
 };
 
 function paintIcons(root = document) {
