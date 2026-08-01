@@ -19,7 +19,7 @@
   />
 
   <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@600;700;800;900&display=swap"
     rel="stylesheet"
   />
 
@@ -31,156 +31,80 @@
   <style>
     .login-page {
       min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      background: var(--ivory);
-    }
-
-    .login-visual {
-      position: relative;
-      overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 56px;
+      gap: 34px;
+      padding: 40px 20px;
       background:
-        radial-gradient(
-          circle at top left,
-          rgba(227, 184, 127, 0.28),
-          transparent 42%
-        ),
-        linear-gradient(
-          145deg,
-          var(--walnut-800),
-          var(--walnut-900)
-        );
-      color: #fff;
-    }
-
-    .login-visual::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      opacity: 0.06;
-      background-image:
-        repeating-linear-gradient(
-          178deg,
-          transparent 0 7px,
-          #000 7px 8px
-        );
-    }
-
-    .login-visual-content {
-      position: relative;
-      z-index: 1;
-      max-width: 540px;
+        radial-gradient(60% 50% at 50% 0%, var(--purple-50), transparent 70%),
+        var(--ivory);
     }
 
     .login-brand {
-      display: inline-flex;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 42px;
+      gap: 12px;
+      text-align: center;
     }
 
     .login-brand-mark {
-      width: 52px;
-      height: 52px;
+      width: 46px;
+      height: 46px;
       display: block;
     }
 
     .login-brand-text strong {
       display: block;
-      font-size: 23px;
-      line-height: 1.1;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -.01em;
     }
 
     .login-brand-text small {
       display: block;
-      color: #cfb89f;
+      color: var(--ink-soft);
       font-size: 12.5px;
-      margin-top: 4px;
-    }
-
-    .login-visual-content h1 {
-      font-size: clamp(34px, 5vw, 58px);
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-      margin-bottom: 20px;
-      max-width: 520px;
-    }
-
-    .login-visual-content p {
-      max-width: 470px;
-      color: #d9c7b4;
-      font-size: 15px;
-      line-height: 1.75;
-    }
-
-    .login-features {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-top: 36px;
-    }
-
-    .login-feature {
-      padding: 16px;
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 16px;
-      background: rgba(255,255,255,.05);
-      backdrop-filter: blur(8px);
-    }
-
-    .login-feature strong {
-      display: block;
-      font-size: 13px;
-      margin-bottom: 5px;
-    }
-
-    .login-feature span {
-      color: #cbb196;
-      font-size: 11.5px;
-      line-height: 1.5;
-    }
-
-    .login-form-area {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 42px;
-      background: var(--ivory);
+      font-weight: 600;
+      margin-top: 2px;
     }
 
     .login-card {
       width: 100%;
-      max-width: 430px;
+      max-width: 400px;
       background: var(--paper);
       border: 1px solid var(--line-soft);
-      border-radius: 28px;
-      padding: 34px;
+      border-radius: var(--radius-xl);
+      padding: 36px 32px;
       box-shadow: var(--shadow-lg);
     }
 
     .login-card-head {
-      margin-bottom: 28px;
+      margin-bottom: 26px;
+      text-align: center;
     }
 
     .login-card-head h2 {
-      font-size: 27px;
-      margin-bottom: 8px;
+      font-size: 23px;
+      margin-bottom: 6px;
+      color: var(--ink);
     }
 
     .login-card-head p {
       color: var(--ink-soft);
       font-size: 13.5px;
-      line-height: 1.6;
+      line-height: 1.55;
+      font-weight: 500;
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 17px;
+      gap: 16px;
     }
 
     .login-label {
@@ -189,16 +113,16 @@
       gap: 7px;
       color: var(--ink-soft);
       font-size: 12.5px;
-      font-weight: 500;
+      font-weight: 700;
     }
 
     .login-input-wrap {
       display: flex;
       align-items: center;
       gap: 10px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      padding: 0 14px;
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 0 15px;
       background: var(--paper);
       transition:
         border-color .18s var(--ease),
@@ -206,8 +130,8 @@
     }
 
     .login-input-wrap:focus-within {
-      border-color: var(--copper-500);
-      box-shadow: 0 0 0 4px rgba(198, 138, 78, .12);
+      border-color: var(--purple-400);
+      box-shadow: 0 0 0 4px var(--purple-50);
     }
 
     .login-input-wrap .ico {
@@ -222,23 +146,25 @@
       color: var(--ink);
       padding: 13px 0;
       font-size: 14px;
+      font-weight: 500;
     }
 
     .password-toggle {
       width: 34px;
       height: 34px;
       border: none;
-      border-radius: 9px;
+      border-radius: var(--radius-pill);
       background: transparent;
       color: var(--ink-faint);
       display: flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
     }
 
     .password-toggle:hover {
-      background: var(--ivory-2);
-      color: var(--walnut-700);
+      background: var(--purple-50);
+      color: var(--purple-600);
     }
 
     .login-options {
@@ -254,21 +180,23 @@
       gap: 8px;
       color: var(--ink-soft);
       font-size: 12.5px;
+      font-weight: 600;
     }
 
     .remember input {
-      accent-color: var(--copper-500);
+      accent-color: var(--purple-500);
     }
 
     .login-error {
       display: none;
       background: var(--red-bg);
       color: var(--red);
-      border: 1px solid rgba(194, 74, 62, .22);
+      border: 1px solid rgba(229, 72, 77, .22);
       padding: 12px 14px;
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
       font-size: 12.5px;
       line-height: 1.5;
+      font-weight: 500;
     }
 
     .login-error.is-show {
@@ -278,17 +206,39 @@
     .login-submit {
       width: 100%;
       justify-content: center;
-      margin-top: 3px;
-      padding: 13px 20px;
+      margin-top: 4px;
+      padding: 14px 20px;
+    }
+
+    /* pequenas informações básicas, discretas, abaixo do card */
+    .login-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--ink-faint);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .login-info span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .login-info .ico {
+      width: 15px;
+      height: 15px;
+      color: var(--purple-400);
     }
 
     .login-footer {
-      margin-top: 26px;
-      padding-top: 20px;
-      border-top: 1px solid var(--line-soft);
-      text-align: center;
       color: var(--ink-faint);
       font-size: 11.5px;
+      font-weight: 500;
+      text-align: center;
     }
 
     .login-theme {
@@ -298,7 +248,7 @@
       width: 40px;
       height: 40px;
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: var(--radius-pill);
       background: var(--paper);
       color: var(--ink-soft);
       display: flex;
@@ -308,56 +258,22 @@
       z-index: 20;
     }
 
-    @media (max-width: 900px) {
-      .login-page {
-        grid-template-columns: 1fr;
-      }
-
-      .login-visual {
-        min-height: auto;
-        padding: 38px 24px 46px;
-      }
-
-      .login-visual-content h1 {
-        font-size: 35px;
-      }
-
-      .login-features {
-        display: none;
-      }
-
-      .login-form-area {
-        padding: 24px 18px 42px;
-      }
-
-      .login-card {
-        margin-top: -22px;
-        position: relative;
-        z-index: 2;
-        padding: 26px 22px;
-      }
-    }
-
     @media (max-width: 520px) {
-      .login-visual {
-        padding-top: 28px;
-      }
-
-      .login-brand {
-        margin-bottom: 26px;
-      }
-
-      .login-visual-content p {
-        font-size: 13px;
+      .login-card {
+        padding: 28px 22px;
       }
 
       .login-card-head h2 {
-        font-size: 23px;
+        font-size: 21px;
       }
 
       .login-options {
         align-items: flex-start;
         flex-direction: column;
+      }
+
+      .login-info {
+        gap: 12px 16px;
       }
     }
   </style>
@@ -377,231 +293,192 @@
 
   <main class="login-page">
 
-    <section class="login-visual">
+    <div class="login-brand">
 
-      <div class="login-visual-content">
+      <span
+        class="login-brand-mark"
+        aria-hidden="true"
+      >
+        <svg
+          viewBox="0 0 40 40"
+          fill="none"
+        >
+          <path
+            d="M20 3C13 8 8 13 8 21c0 6.6 5.4 12 12 12s12-5.4 12-12c0-8-5-13-12-18Z"
+            fill="url(#loginGradient)"
+          />
 
-        <div class="login-brand">
+          <path
+            d="M20 9c0 8 0 16 0 24"
+            stroke="#fff"
+            stroke-opacity=".55"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
 
-          <span
-            class="login-brand-mark"
-            aria-hidden="true"
-          >
-            <svg
-              viewBox="0 0 40 40"
-              fill="none"
+          <path
+            d="M20 15c-2.6 1.6-4.4 3-4.4 5.4M20 21c2.6 1.6 4.4 3 4.4 5.4"
+            stroke="#fff"
+            stroke-opacity=".4"
+            stroke-width="1.2"
+            stroke-linecap="round"
+          />
+
+          <defs>
+            <linearGradient
+              id="loginGradient"
+              x1="8"
+              y1="3"
+              x2="32"
+              y2="33"
+              gradientUnits="userSpaceOnUse"
             >
-              <path
-                d="M20 3C13 8 8 13 8 21c0 6.6 5.4 12 12 12s12-5.4 12-12c0-8-5-13-12-18Z"
-                fill="url(#loginGradient)"
-              />
+              <stop stop-color="#B584F0" />
+              <stop offset="1" stop-color="#820AD1" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
 
-              <path
-                d="M20 9c0 8 0 16 0 24"
-                stroke="#fff"
-                stroke-opacity=".55"
-                stroke-width="1.4"
-                stroke-linecap="round"
-              />
+      <div class="login-brand-text">
+        <strong>Nogueira</strong>
+        <small>Gestão de contas</small>
+      </div>
 
-              <path
-                d="M20 15c-2.6 1.6-4.4 3-4.4 5.4M20 21c2.6 1.6 4.4 3 4.4 5.4"
-                stroke="#fff"
-                stroke-opacity=".4"
-                stroke-width="1.2"
-                stroke-linecap="round"
-              />
+    </div>
 
-              <defs>
-                <linearGradient
-                  id="loginGradient"
-                  x1="8"
-                  y1="3"
-                  x2="32"
-                  y2="33"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stop-color="#E3B87F" />
-                  <stop offset="1" stop-color="#8B5A34" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </span>
+    <div class="login-card">
 
-          <div class="login-brand-text">
-            <strong>Nogueira</strong>
-            <small>Gestão de contas</small>
-          </div>
-
-        </div>
-
-        <h1>
-          As contas da loja, organizadas com simplicidade.
-        </h1>
+      <div class="login-card-head">
+        <h2>Bem-vindo</h2>
 
         <p>
-          Registre compras, acompanhe valores pendentes,
-          conclua pagamentos e consulte todo o histórico
-          dos seus clientes em um único lugar.
+          Entre com seu usuário ou e-mail para acessar
+          a Caderneta Digital.
         </p>
-
-        <div class="login-features">
-
-          <div class="login-feature">
-            <strong>Contas organizadas</strong>
-            <span>
-              Compras separadas por cliente, data e mês.
-            </span>
-          </div>
-
-          <div class="login-feature">
-            <strong>Histórico seguro</strong>
-            <span>
-              Consulte contas antigas e pagamentos concluídos.
-            </span>
-          </div>
-
-          <div class="login-feature">
-            <strong>Relatórios claros</strong>
-            <span>
-              Visualize recebimentos e valores pendentes.
-            </span>
-          </div>
-
-          <div class="login-feature">
-            <strong>Comprovante em PDF</strong>
-            <span>
-              Gere documentos completos para o cliente.
-            </span>
-          </div>
-
-        </div>
-
       </div>
 
-    </section>
+      <form
+        class="login-form"
+        id="loginForm"
+        novalidate
+      >
 
-    <section class="login-form-area">
+        <div
+          class="login-error"
+          id="loginError"
+          role="alert"
+        ></div>
 
-      <div class="login-card">
+        <label class="login-label">
 
-        <div class="login-card-head">
-          <h2>Bem-vindo</h2>
+          Usuário ou e-mail
 
-          <p>
-            Entre com seu usuário ou e-mail para acessar
-            a Caderneta Digital.
-          </p>
+          <div class="login-input-wrap">
+
+            <span
+              class="ico"
+              id="loginUserIcon"
+            ></span>
+
+            <input
+              class="login-input"
+              id="loginUsuario"
+              name="usuario"
+              type="text"
+              placeholder="Digite seu usuário"
+              autocomplete="username"
+              maxlength="150"
+              required
+            />
+
+          </div>
+
+        </label>
+
+        <label class="login-label">
+
+          Senha
+
+          <div class="login-input-wrap">
+
+            <span
+              class="ico"
+              id="loginPasswordIcon"
+            ></span>
+
+            <input
+              class="login-input"
+              id="loginSenha"
+              name="senha"
+              type="password"
+              placeholder="Digite sua senha"
+              autocomplete="current-password"
+              maxlength="72"
+              required
+            />
+
+            <button
+              class="password-toggle"
+              id="btnTogglePassword"
+              type="button"
+              aria-label="Mostrar senha"
+            >
+              <span
+                class="ico"
+                id="passwordToggleIcon"
+              ></span>
+            </button>
+
+          </div>
+
+        </label>
+
+        <div class="login-options">
+
+          <label class="remember">
+
+            <input
+              type="checkbox"
+              id="lembrarUsuario"
+            />
+
+            Lembrar meu usuário
+
+          </label>
+
         </div>
 
-        <form
-          class="login-form"
-          id="loginForm"
-          novalidate
+        <button
+          class="btn btn-primary login-submit"
+          id="btnLogin"
+          type="submit"
         >
+          Entrar
+        </button>
 
-          <div
-            class="login-error"
-            id="loginError"
-            role="alert"
-          ></div>
+      </form>
 
-          <label class="login-label">
+    </div>
 
-            Usuário ou e-mail
+    <div class="login-info">
+      <span>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+        Acesso seguro
+      </span>
+      <span>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 4v5h5"/></svg>
+        Histórico completo
+      </span>
+      <span>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12s3.4-6 8-6 8 6 8 6-3.4 6-8 6-8-6-8-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+        Contas sempre à vista
+      </span>
+    </div>
 
-            <div class="login-input-wrap">
-
-              <span
-                class="ico"
-                id="loginUserIcon"
-              ></span>
-
-              <input
-                class="login-input"
-                id="loginUsuario"
-                name="usuario"
-                type="text"
-                placeholder="Digite seu usuário"
-                autocomplete="username"
-                maxlength="150"
-                required
-              />
-
-            </div>
-
-          </label>
-
-          <label class="login-label">
-
-            Senha
-
-            <div class="login-input-wrap">
-
-              <span
-                class="ico"
-                id="loginPasswordIcon"
-              ></span>
-
-              <input
-                class="login-input"
-                id="loginSenha"
-                name="senha"
-                type="password"
-                placeholder="Digite sua senha"
-                autocomplete="current-password"
-                maxlength="72"
-                required
-              />
-
-              <button
-                class="password-toggle"
-                id="btnTogglePassword"
-                type="button"
-                aria-label="Mostrar senha"
-              >
-                <span
-                  class="ico"
-                  id="passwordToggleIcon"
-                ></span>
-              </button>
-
-            </div>
-
-          </label>
-
-          <div class="login-options">
-
-            <label class="remember">
-
-              <input
-                type="checkbox"
-                id="lembrarUsuario"
-              />
-
-              Lembrar meu usuário
-
-            </label>
-
-          </div>
-
-          <button
-            class="btn btn-primary login-submit"
-            id="btnLogin"
-            type="submit"
-          >
-            Entrar
-          </button>
-
-        </form>
-
-        <div class="login-footer">
-          Caderneta Digital · Mercadinho Nogueira
-        </div>
-
-      </div>
-
-    </section>
+    <div class="login-footer">
+      Caderneta Digital · Mercadinho Nogueira
+    </div>
 
   </main>
 
