@@ -4582,12 +4582,14 @@ async function baixarPdfConta(
 
 
 // ============================================================================
-// VISUALIZAR PDF
+// VISUALIZAR E IMPRIMIR PDF
 // ============================================================================
 
 async function visualizarPdfConta(
   contaId,
 ) {
+  let urlPdf = null;
+
   try {
     const resposta =
       await api(
@@ -4597,42 +4599,118 @@ async function visualizarPdfConta(
     const arquivo =
       await resposta.blob();
 
-    const url =
+    if (
+      !arquivo ||
+      arquivo.size === 0
+    ) {
+      throw new Error(
+        "O PDF gerado está vazio.",
+      );
+    }
+
+    urlPdf =
       URL.createObjectURL(
         arquivo,
       );
 
     const novaAba =
       window.open(
-        url,
+        urlPdf,
         "_blank",
-        "noopener,noreferrer",
       );
 
     if (!novaAba) {
+      URL.revokeObjectURL(
+        urlPdf,
+      );
+
       mostrarToast(
-        "O navegador bloqueou a nova aba.",
+        "O navegador bloqueou a janela de impressão. Permita pop-ups para este site.",
         "close",
+      );
+
+      return;
+    }
+
+    novaAba.focus();
+
+    /*
+      Aguarda o PDF carregar na nova aba antes de tentar abrir
+      a caixa de impressão.
+    */
+    const tentarImprimir =
+      () => {
+        try {
+          novaAba.focus();
+          novaAba.print();
+        } catch (erro) {
+          console.warn(
+            "Não foi possível abrir a impressão automaticamente:",
+            erro,
+          );
+        }
+      };
+
+    /*
+      Alguns navegadores disparam o evento load normalmente.
+    */
+    novaAba.addEventListener(
+      "load",
+      () => {
+        setTimeout(
+          tentarImprimir,
+          800,
+        );
+      },
+      {
+        once: true,
+      },
+    );
+
+    /*
+      Fallback para navegadores que não disparam load corretamente
+      ao abrir um PDF em Blob URL.
+    */
+    setTimeout(
+      tentarImprimir,
+      1800,
+    );
+
+    /*
+      Mantém a URL disponível por tempo suficiente para leitura
+      e impressão. Depois, libera a memória.
+    */
+    setTimeout(
+      () => {
+        if (urlPdf) {
+          URL.revokeObjectURL(
+            urlPdf,
+          );
+
+          urlPdf = null;
+        }
+      },
+      120000,
+    );
+  } catch (erro) {
+    if (urlPdf) {
+      URL.revokeObjectURL(
+        urlPdf,
       );
     }
 
-    setTimeout(
-      () => {
-        URL.revokeObjectURL(
-          url,
-        );
-      },
-      60000,
+    console.error(
+      "Erro ao visualizar ou imprimir o PDF:",
+      erro,
     );
-  } catch (erro) {
+
     mostrarToast(
       erro.message ||
-        "Não foi possível visualizar o PDF.",
+        "Não foi possível preparar o PDF para impressão.",
       "close",
     );
   }
 }
-
 
 // ============================================================================
 // COMPARTILHAR PDF

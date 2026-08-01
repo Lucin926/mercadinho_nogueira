@@ -7877,7 +7877,6 @@ async function buscarDadosComprovantePdf(contaId) {
   };
 }
 
-
 // ============================================================================
 // GERAR DOCUMENTO PDF
 // ============================================================================
@@ -7896,13 +7895,14 @@ function gerarComprovantePdf({
     margins: {
       top: 45,
       bottom: 50,
-      left: 50,
-      right: 50,
+      left: 45,
+      right: 45,
     },
 
+    bufferPages: true,
+
     info: {
-      Title:
-        `Comprovante da conta ${conta.id}`,
+      Title: `Comprovante da conta ${conta.id}`,
 
       Author:
         configuracao.nome_fantasia ||
@@ -7910,7 +7910,7 @@ function gerarComprovantePdf({
         "Caderneta Digital",
 
       Subject:
-        "Comprovante de pagamento",
+        "Comprovante detalhado de compras",
 
       Creator:
         "Caderneta Digital",
@@ -7919,7 +7919,8 @@ function gerarComprovantePdf({
 
   const nomeClienteArquivo =
     limparNomeArquivo(
-      conta.cliente_nome,
+      conta.cliente_nome ||
+        "cliente",
     );
 
   const nomeArquivo =
@@ -7937,587 +7938,953 @@ function gerarComprovantePdf({
 
   documento.pipe(response);
 
-  // --------------------------------------------------------------------------
-  // CABEÇALHO
-  // --------------------------------------------------------------------------
+  // ==========================================================================
+  // CONFIGURAÇÕES DE LAYOUT
+  // ==========================================================================
 
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(21)
-    .fillColor("#111827")
-    .text(
+  const margemEsquerda =
+    documento.page.margins.left;
+
+  const margemDireita =
+    documento.page.width -
+    documento.page.margins.right;
+
+  const larguraPagina =
+    margemDireita -
+    margemEsquerda;
+
+  const colunas = {
+    numero: {
+      x: margemEsquerda,
+      largura: 32,
+    },
+
+    data: {
+      x: margemEsquerda + 32,
+      largura: 74,
+    },
+
+    descricao: {
+      x: margemEsquerda + 106,
+      largura: 225,
+    },
+
+    valor: {
+      x: margemEsquerda + 331,
+      largura:
+        larguraPagina - 331,
+    },
+  };
+
+  // ==========================================================================
+  // CABEÇALHO PRINCIPAL
+  // ==========================================================================
+
+  function desenharCabecalhoPrincipal() {
+    const nomeLoja =
       configuracao.nome_fantasia ||
-        configuracao.nome_loja ||
-        "Caderneta Digital",
-      {
-        align: "center",
-      },
-    );
+      configuracao.nome_loja ||
+      "Caderneta Digital";
 
-  if (
-    configuracao.nome_fantasia &&
-    configuracao.nome_loja &&
-    configuracao.nome_fantasia !==
-      configuracao.nome_loja
-  ) {
     documento
-      .moveDown(0.2)
-      .font("Helvetica")
-      .fontSize(10)
-      .fillColor("#6B7280")
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .fillColor("#111827")
       .text(
-        configuracao.nome_loja,
+        nomeLoja,
         {
           align: "center",
         },
       );
-  }
 
-  const dadosLoja = [
-    configuracao.cnpj
-      ? `CNPJ: ${configuracao.cnpj}`
-      : null,
+    if (
+      configuracao.nome_fantasia &&
+      configuracao.nome_loja &&
+      configuracao.nome_fantasia !==
+        configuracao.nome_loja
+    ) {
+      documento
+        .moveDown(0.2)
+        .font("Helvetica")
+        .fontSize(9)
+        .fillColor("#6B7280")
+        .text(
+          configuracao.nome_loja,
+          {
+            align: "center",
+          },
+        );
+    }
 
-    configuracao.telefone
-      ? `Telefone: ${configuracao.telefone}`
-      : null,
+    const dadosLoja = [
+      configuracao.cnpj
+        ? `CNPJ: ${configuracao.cnpj}`
+        : null,
 
-    configuracao.endereco
-      ? configuracao.endereco
-      : null,
-  ].filter(Boolean);
+      configuracao.telefone
+        ? `Telefone: ${configuracao.telefone}`
+        : null,
 
-  if (dadosLoja.length > 0) {
+      configuracao.endereco ||
+        null,
+    ].filter(Boolean);
+
+    if (dadosLoja.length > 0) {
+      documento
+        .moveDown(0.35)
+        .font("Helvetica")
+        .fontSize(8.5)
+        .fillColor("#6B7280")
+        .text(
+          dadosLoja.join(" • "),
+          {
+            align: "center",
+          },
+        );
+    }
+
+    documento.moveDown(0.9);
+
     documento
-      .moveDown(0.4)
+      .font("Helvetica-Bold")
+      .fontSize(15)
+      .fillColor("#111827")
+      .text(
+        "COMPROVANTE DE COMPRAS",
+        {
+          align: "center",
+        },
+      );
+
+    documento
+      .moveDown(0.25)
       .font("Helvetica")
       .fontSize(9)
       .fillColor("#6B7280")
       .text(
-        dadosLoja.join(" • "),
+        `Conta nº ${conta.id}`,
         {
           align: "center",
         },
       );
+
+    documento.moveDown(0.8);
+
+    desenharLinhaPdf(
+      documento,
+      documento.y,
+      margemEsquerda,
+      margemDireita,
+    );
+
+    documento.moveDown(0.8);
   }
 
-  documento.moveDown(1);
+  // ==========================================================================
+  // STATUS DO PAGAMENTO
+  // ==========================================================================
 
-  desenharLinhaPdf(
-    documento,
-    documento.y,
-  );
-
-  documento.moveDown(1);
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(17)
-    .fillColor("#111827")
-    .text(
-      "Comprovante de Conta",
-      {
-        align: "center",
-      },
-    );
-
-  documento
-    .moveDown(0.35)
-    .font("Helvetica")
-    .fontSize(10)
-    .fillColor("#6B7280")
-    .text(
-      `Conta nº ${conta.id}`,
-      {
-        align: "center",
-      },
-    );
-
-  documento.moveDown(1.4);
-
-  // --------------------------------------------------------------------------
-  // STATUS
-  // --------------------------------------------------------------------------
-
-  const statusY = documento.y;
-
-  documento
-    .roundedRect(
-      50,
-      statusY,
-      495,
-      42,
-      10,
-    )
-    .fillColor("#ECFDF3")
-    .fill();
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(12)
-    .fillColor("#15803D")
-    .text(
-      "PAGAMENTO CONCLUÍDO",
-      65,
-      statusY + 14,
-      {
-        width: 465,
-        align: "center",
-      },
-    );
-
-  documento.y =
-    statusY + 60;
-
-  // --------------------------------------------------------------------------
-  // DADOS DO CLIENTE E DA CONTA
-  // --------------------------------------------------------------------------
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(12)
-    .fillColor("#111827")
-    .text("Dados da conta");
-
-  documento.moveDown(0.7);
-
-  const colunaEsquerda = 50;
-  const colunaDireita = 310;
-  const larguraColuna = 235;
-
-  const inicioInformacoes =
-    documento.y;
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Cliente",
-      colunaEsquerda,
-      inicioInformacoes,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(11)
-    .fillColor("#111827")
-    .text(
-      conta.cliente_nome,
-      colunaEsquerda,
-      inicioInformacoes + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Competência",
-      colunaDireita,
-      inicioInformacoes,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(11)
-    .fillColor("#111827")
-    .text(
-      formatarCompetenciaBrasil(
-        conta.competencia,
-      ),
-      colunaDireita,
-      inicioInformacoes + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento.y =
-    inicioInformacoes + 52;
-
-  const segundaLinha =
-    documento.y;
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Conta aberta em",
-      colunaEsquerda,
-      segundaLinha,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(10)
-    .fillColor("#111827")
-    .text(
-      formatarDataHoraBrasil(
-        conta.data_abertura,
-      ),
-      colunaEsquerda,
-      segundaLinha + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Pagamento realizado em",
-      colunaDireita,
-      segundaLinha,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(10)
-    .fillColor("#111827")
-    .text(
-      formatarDataHoraBrasil(
-        conta.data_pagamento,
-      ),
-      colunaDireita,
-      segundaLinha + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento.y =
-    segundaLinha + 52;
-
-  const terceiraLinha =
-    documento.y;
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Forma de pagamento",
-      colunaEsquerda,
-      terceiraLinha,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(10)
-    .fillColor("#111827")
-    .text(
-      conta.forma,
-      colunaEsquerda,
-      terceiraLinha + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#6B7280")
-    .text(
-      "Pagamento recebido por",
-      colunaDireita,
-      terceiraLinha,
-    );
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(10)
-    .fillColor("#111827")
-    .text(
-      conta.recebido_por_nome ||
-        "Não informado",
-      colunaDireita,
-      terceiraLinha + 13,
-      {
-        width: larguraColuna,
-      },
-    );
-
-  documento.y =
-    terceiraLinha + 55;
-
-  desenharLinhaPdf(
-    documento,
-    documento.y,
-  );
-
-  documento.moveDown(1);
-
-  // --------------------------------------------------------------------------
-  // LISTA DE COMPRAS
-  // --------------------------------------------------------------------------
-
-  documento
-    .font("Helvetica-Bold")
-    .fontSize(12)
-    .fillColor("#111827")
-    .text("Compras registradas");
-
-  documento.moveDown(0.8);
-
-  function desenharCabecalhoTabela() {
-    const y = documento.y;
+  function desenharStatusPagamento() {
+    const y =
+      documento.y;
 
     documento
       .roundedRect(
-        50,
+        margemEsquerda,
         y,
-        495,
-        28,
-        6,
+        larguraPagina,
+        40,
+        8,
       )
-      .fillColor("#F3F4F6")
+      .fillColor("#ECFDF5")
       .fill();
 
     documento
       .font("Helvetica-Bold")
-      .fontSize(9)
-      .fillColor("#374151")
+      .fontSize(11)
+      .fillColor("#047857")
       .text(
-        "Data",
-        60,
-        y + 9,
+        "PAGAMENTO CONCLUÍDO",
+        margemEsquerda,
+        y + 14,
         {
-          width: 72,
-        },
-      )
-      .text(
-        "Hora",
-        135,
-        y + 9,
-        {
-          width: 50,
-        },
-      )
-      .text(
-        "Descrição",
-        190,
-        y + 9,
-        {
-          width: 255,
-        },
-      )
-      .text(
-        "Valor",
-        455,
-        y + 9,
-        {
-          width: 78,
-          align: "right",
+          width:
+            larguraPagina,
+          align: "center",
         },
       );
 
     documento.y =
-      y + 35;
+      y + 55;
   }
 
-  desenharCabecalhoTabela();
+  // ==========================================================================
+  // DADOS DA CONTA
+  // ==========================================================================
 
-  for (const compra of compras) {
+  function desenharDadosConta() {
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor("#111827")
+      .text(
+        "Dados da conta",
+      );
+
+    documento.moveDown(0.7);
+
+    const colunaEsquerda =
+      margemEsquerda;
+
+    const colunaDireita =
+      margemEsquerda + 265;
+
+    const larguraColuna =
+      230;
+
+    const inicioY =
+      documento.y;
+
+    // ------------------------------------------------------------------------
+    // Cliente
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "CLIENTE",
+        colunaEsquerda,
+        inicioY,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        conta.cliente_nome ||
+          "Não informado",
+        colunaEsquerda,
+        inicioY + 14,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Número da conta
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "NÚMERO DA CONTA",
+        colunaDireita,
+        inicioY,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        `Conta nº ${conta.id}`,
+        colunaDireita,
+        inicioY + 14,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Competência
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "MÊS DE REFERÊNCIA",
+        colunaEsquerda,
+        inicioY + 50,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        formatarCompetenciaBrasil(
+          conta.competencia,
+        ),
+        colunaEsquerda,
+        inicioY + 64,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Data de abertura
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "CONTA ABERTA EM",
+        colunaDireita,
+        inicioY + 50,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        formatarDataHoraBrasil(
+          conta.data_abertura,
+        ),
+        colunaDireita,
+        inicioY + 64,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Forma de pagamento
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "FORMA DE PAGAMENTO",
+        colunaEsquerda,
+        inicioY + 100,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        {
+          DINHEIRO:
+            "Dinheiro",
+
+          PIX:
+            "Pix",
+
+          CARTAO:
+            "Cartão",
+        }[conta.forma] ||
+          conta.forma ||
+          "Não informada",
+        colunaEsquerda,
+        inicioY + 114,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Data do pagamento
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "PAGAMENTO REALIZADO EM",
+        colunaDireita,
+        inicioY + 100,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        formatarDataHoraBrasil(
+          conta.data_pagamento,
+        ),
+        colunaDireita,
+        inicioY + 114,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Recebido por
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(
+        "PAGAMENTO RECEBIDO POR",
+        colunaEsquerda,
+        inicioY + 150,
+      );
+
+    documento
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#111827")
+      .text(
+        conta.recebido_por_nome ||
+          "Não informado",
+        colunaEsquerda,
+        inicioY + 164,
+        {
+          width:
+            larguraColuna,
+        },
+      );
+
+    documento.y =
+      inicioY + 205;
+
+    desenharLinhaPdf(
+      documento,
+      documento.y,
+      margemEsquerda,
+      margemDireita,
+    );
+
+    documento.moveDown(0.8);
+  }
+
+  // ==========================================================================
+  // CABEÇALHO DA TABELA
+  // ==========================================================================
+
+  function desenharCabecalhoTabela() {
+    const y =
+      documento.y;
+
+    documento
+      .rect(
+        margemEsquerda,
+        y,
+        larguraPagina,
+        29,
+      )
+      .fillColor("#1F2937")
+      .fill();
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(8.5)
+      .fillColor("#FFFFFF")
+      .text(
+        "Nº",
+        colunas.numero.x + 4,
+        y + 10,
+        {
+          width:
+            colunas.numero.largura -
+            8,
+        },
+      )
+      .text(
+        "DATA",
+        colunas.data.x + 4,
+        y + 10,
+        {
+          width:
+            colunas.data.largura -
+            8,
+        },
+      )
+      .text(
+        "PRODUTO / DESCRIÇÃO",
+        colunas.descricao.x + 4,
+        y + 10,
+        {
+          width:
+            colunas.descricao.largura -
+            8,
+        },
+      )
+      .text(
+        "VALOR",
+        colunas.valor.x + 4,
+        y + 10,
+        {
+          width:
+            colunas.valor.largura -
+            8,
+
+          align:
+            "right",
+        },
+      );
+
+    documento.y =
+      y + 29;
+  }
+
+  // ==========================================================================
+  // VERIFICAR ESPAÇO DA PÁGINA
+  // ==========================================================================
+
+  function precisaNovaPagina(
+    alturaNecessaria,
+  ) {
+    const limitePagina =
+      documento.page.height -
+      documento.page.margins.bottom -
+      65;
+
+    return (
+      documento.y +
+        alturaNecessaria >
+      limitePagina
+    );
+  }
+
+  // ==========================================================================
+  // CRIAR PÁGINA DE CONTINUAÇÃO
+  // ==========================================================================
+
+  function criarPaginaContinuacao() {
+    documento.addPage();
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor("#111827")
+      .text(
+        `Compras de ${conta.cliente_nome}`,
+        margemEsquerda,
+        documento.y,
+      );
+
+    documento
+      .moveDown(0.2)
+      .font("Helvetica")
+      .fontSize(8.5)
+      .fillColor("#6B7280")
+      .text(
+        `Conta nº ${conta.id} — continuação`,
+      );
+
+    documento.moveDown(0.7);
+
+    desenharCabecalhoTabela();
+  }
+
+  // ==========================================================================
+  // DESENHAR LINHA DE COMPRA
+  // ==========================================================================
+
+  function desenharLinhaCompra(
+    compra,
+    indice,
+  ) {
     const descricao =
-      compra.descricao || "-";
+      compra.descricao ||
+      "Compra sem descrição";
+
+    const observacao =
+      compra.observacao
+        ? `Observação: ${compra.observacao}`
+        : "";
+
+    documento
+      .font("Helvetica")
+      .fontSize(9);
 
     const alturaDescricao =
       documento.heightOfString(
         descricao,
         {
-          width: 250,
-          font: "Helvetica",
-          size: 9,
+          width:
+            colunas.descricao.largura -
+            12,
         },
       );
 
+    const alturaObservacao =
+      observacao
+        ? documento.heightOfString(
+            observacao,
+            {
+              width:
+                colunas.descricao.largura -
+                12,
+            },
+          )
+        : 0;
+
     const alturaLinha =
       Math.max(
-        34,
-        alturaDescricao + 18,
+        38,
+        alturaDescricao +
+          alturaObservacao +
+          (observacao
+            ? 23
+            : 17),
       );
 
-    const criouNovaPagina =
-      verificarNovaPaginaPdf(
-        documento,
-        alturaLinha + 35,
-      );
-
-    if (criouNovaPagina) {
-      documento
-        .font("Helvetica-Bold")
-        .fontSize(11)
-        .fillColor("#111827")
-        .text(
-          `Conta nº ${conta.id} — continuação`,
-        );
-
-      documento.moveDown(0.7);
-
-      desenharCabecalhoTabela();
+    if (
+      precisaNovaPagina(
+        alturaLinha,
+      )
+    ) {
+      criarPaginaContinuacao();
     }
 
-    const y = documento.y;
+    const y =
+      documento.y;
+
+    const corFundo =
+      indice % 2 === 0
+        ? "#F9FAFB"
+        : "#FFFFFF";
+
+    documento
+      .rect(
+        margemEsquerda,
+        y,
+        larguraPagina,
+        alturaLinha,
+      )
+      .fillColor(
+        corFundo,
+      )
+      .fill();
+
+    documento
+      .strokeColor("#E5E7EB")
+      .lineWidth(0.5)
+      .rect(
+        margemEsquerda,
+        y,
+        larguraPagina,
+        alturaLinha,
+      )
+      .stroke();
+
+    // ------------------------------------------------------------------------
+    // Número
+    // ------------------------------------------------------------------------
 
     documento
       .font("Helvetica")
-      .fontSize(9)
+      .fontSize(8.5)
+      .fillColor("#374151")
+      .text(
+        String(indice + 1),
+        colunas.numero.x + 4,
+        y + 11,
+        {
+          width:
+            colunas.numero.largura -
+            8,
+        },
+      );
+
+    // ------------------------------------------------------------------------
+    // Data
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica")
+      .fontSize(8.5)
       .fillColor("#374151")
       .text(
         formatarDataBrasil(
           compra.data_compra,
         ),
-        60,
-        y + 7,
+        colunas.data.x + 4,
+        y + 11,
         {
-          width: 72,
+          width:
+            colunas.data.largura -
+            8,
         },
-      )
-      .text(
-        formatarHoraBrasil(
-          compra.data_compra,
-        ),
-        135,
-        y + 7,
-        {
-          width: 50,
-        },
-      )
+      );
+
+    // ------------------------------------------------------------------------
+    // Produto ou descrição
+    // ------------------------------------------------------------------------
+
+    documento
+      .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#111827")
       .text(
         descricao,
-        190,
-        y + 7,
+        colunas.descricao.x + 5,
+        y + 9,
         {
-          width: 250,
+          width:
+            colunas.descricao.largura -
+            12,
         },
-      )
+      );
+
+    if (observacao) {
+      documento
+        .font("Helvetica")
+        .fontSize(7.8)
+        .fillColor("#6B7280")
+        .text(
+          observacao,
+          colunas.descricao.x + 5,
+          y +
+            13 +
+            alturaDescricao,
+          {
+            width:
+              colunas.descricao.largura -
+              12,
+          },
+        );
+    }
+
+    // ------------------------------------------------------------------------
+    // Valor
+    // ------------------------------------------------------------------------
+
+    documento
       .font("Helvetica-Bold")
+      .fontSize(9)
+      .fillColor("#111827")
       .text(
         formatarMoeda(
           compra.valor,
         ),
-        455,
-        y + 7,
+        colunas.valor.x + 4,
+        y + 11,
         {
-          width: 78,
-          align: "right",
+          width:
+            colunas.valor.largura -
+            8,
+
+          align:
+            "right",
         },
       );
 
     documento.y =
       y + alturaLinha;
-
-    desenharLinhaPdf(
-      documento,
-      documento.y,
-      50,
-      545,
-    );
-
-    documento.moveDown(0.25);
   }
 
-  if (compras.length === 0) {
+  // ==========================================================================
+  // INÍCIO DA CONSTRUÇÃO DO PDF
+  // ==========================================================================
+
+  desenharCabecalhoPrincipal();
+
+  desenharStatusPagamento();
+
+  desenharDadosConta();
+
+  documento
+    .font("Helvetica-Bold")
+    .fontSize(11)
+    .fillColor("#111827")
+    .text(
+      "Compras registradas",
+    );
+
+  documento
+    .moveDown(0.25)
+    .font("Helvetica")
+    .fontSize(8.5)
+    .fillColor("#6B7280")
+    .text(
+      `${compras.length} compra(s) registrada(s) nesta conta.`,
+    );
+
+  documento.moveDown(0.7);
+
+  desenharCabecalhoTabela();
+
+  // ==========================================================================
+  // COMPRAS
+  // ==========================================================================
+
+  if (
+    !Array.isArray(compras) ||
+    compras.length === 0
+  ) {
+    const y =
+      documento.y;
+
+    documento
+      .rect(
+        margemEsquerda,
+        y,
+        larguraPagina,
+        42,
+      )
+      .fillColor("#F9FAFB")
+      .fill();
+
     documento
       .font("Helvetica")
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("#6B7280")
       .text(
-        "Nenhuma compra registrada.",
+        "Nenhuma compra registrada nesta conta.",
+        margemEsquerda,
+        y + 15,
         {
-          align: "center",
+          width:
+            larguraPagina,
+
+          align:
+            "center",
         },
       );
 
-    documento.moveDown(1);
+    documento.y =
+      y + 42;
+  } else {
+    compras.forEach(
+      (
+        compra,
+        indice,
+      ) => {
+        desenharLinhaCompra(
+          compra,
+          indice,
+        );
+      },
+    );
   }
 
-  // --------------------------------------------------------------------------
+  // ==========================================================================
   // TOTAL
-  // --------------------------------------------------------------------------
+  // ==========================================================================
 
-  verificarNovaPaginaPdf(
-    documento,
-    120,
-  );
+  if (
+    precisaNovaPagina(
+      115,
+    )
+  ) {
+    documento.addPage();
+  }
 
-  documento.moveDown(0.8);
+  documento.moveDown(0.9);
 
-  const totalY = documento.y;
+  const totalY =
+    documento.y;
+
+  const larguraTotal =
+    220;
+
+  const xTotal =
+    margemDireita -
+    larguraTotal;
 
   documento
     .roundedRect(
-      330,
+      xTotal,
       totalY,
-      215,
-      62,
-      10,
+      larguraTotal,
+      54,
+      8,
     )
-    .fillColor("#F9FAFB")
+    .fillColor("#ECFDF5")
     .fill();
 
   documento
-    .font("Helvetica")
-    .fontSize(10)
-    .fillColor("#6B7280")
+    .strokeColor("#10B981")
+    .lineWidth(1)
+    .roundedRect(
+      xTotal,
+      totalY,
+      larguraTotal,
+      54,
+      8,
+    )
+    .stroke();
+
+  documento
+    .font("Helvetica-Bold")
+    .fontSize(9)
+    .fillColor("#065F46")
     .text(
       "TOTAL PAGO",
-      350,
-      totalY + 12,
+      xTotal + 14,
+      totalY + 10,
       {
-        width: 175,
-        align: "right",
+        width:
+          larguraTotal - 28,
       },
     );
 
   documento
     .font("Helvetica-Bold")
-    .fontSize(18)
-    .fillColor("#111827")
+    .fontSize(17)
+    .fillColor("#047857")
     .text(
       formatarMoeda(
-        totalCalculado,
+        conta.valor_pago ??
+          totalCalculado,
       ),
-      350,
-      totalY + 30,
+      xTotal + 14,
+      totalY + 27,
       {
-        width: 175,
-        align: "right",
+        width:
+          larguraTotal - 28,
+
+        align:
+          "right",
       },
     );
 
   documento.y =
-    totalY + 82;
+    totalY + 72;
 
-  // --------------------------------------------------------------------------
+  // ==========================================================================
   // OBSERVAÇÃO DO PAGAMENTO
-  // --------------------------------------------------------------------------
+  // ==========================================================================
 
-  if (conta.observacao_pagamento) {
-    verificarNovaPaginaPdf(
-      documento,
-      80,
-    );
+  if (
+    conta.observacao_pagamento
+  ) {
+    if (
+      precisaNovaPagina(
+        85,
+      )
+    ) {
+      documento.addPage();
+    }
 
     documento
       .font("Helvetica-Bold")
-      .fontSize(10)
-      .fillColor("#111827")
+      .fontSize(9)
+      .fillColor("#374151")
       .text(
-        "Observação do pagamento",
+        "Observação do pagamento:",
       );
 
-    documento.moveDown(0.3);
-
     documento
+      .moveDown(0.3)
       .font("Helvetica")
       .fontSize(9)
       .fillColor("#4B5563")
@@ -8525,21 +8892,26 @@ function gerarComprovantePdf({
         conta.observacao_pagamento,
       );
 
-    documento.moveDown(1);
+    documento.moveDown(0.8);
   }
 
-  // --------------------------------------------------------------------------
+  // ==========================================================================
   // RODAPÉ
-  // --------------------------------------------------------------------------
+  // ==========================================================================
 
-  verificarNovaPaginaPdf(
-    documento,
-    80,
-  );
+  if (
+    precisaNovaPagina(
+      75,
+    )
+  ) {
+    documento.addPage();
+  }
 
   desenharLinhaPdf(
     documento,
     documento.y,
+    margemEsquerda,
+    margemDireita,
   );
 
   documento.moveDown(0.8);
@@ -8550,18 +8922,22 @@ function gerarComprovantePdf({
     .fillColor("#6B7280")
     .text(
       configuracao.rodape_pdf ||
-        "Este documento foi gerado pelo sistema Caderneta Digital.",
+        "Este documento foi gerado automaticamente pela Caderneta Digital.",
       {
-        align: "center",
+        align:
+          "center",
       },
     );
 
   documento
-    .moveDown(0.35)
+    .moveDown(0.3)
     .text(
-      `Documento gerado em ${formatarDataHoraBrasil(new Date())}.`,
+      `Documento gerado em ${formatarDataHoraBrasil(
+        new Date(),
+      )}.`,
       {
-        align: "center",
+        align:
+          "center",
       },
     );
 
@@ -8569,6 +8945,7 @@ function gerarComprovantePdf({
 
   return nomeArquivo;
 }
+
 
 
 // ============================================================================
